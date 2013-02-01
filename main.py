@@ -86,7 +86,7 @@ class Object():
 				self.delete()	
 				return
 
-			if distance < (self.size + object.size) and self.mass >= object.mass and (self.mass + object.mass) > 0:
+			if distance < (self.size + object.size) and self.mass >= object.mass and (self.mass or object.mass):
 				new_velocity = [0, 0]
 				new_velocity[0] = (self.vel[0] * self.mass + object.vel[0] * object.mass) / (self.mass + object.mass)
 				new_velocity[1] = (self.vel[1] * self.mass + object.vel[1] * object.mass) / (self.mass + object.mass)
@@ -94,6 +94,8 @@ class Object():
 				new_color[0] = (self.color[0] * self.mass + object.color[0] * object.mass) / (self.mass + object.mass)
 				new_color[1] = (self.color[1] * self.mass + object.color[1] * object.mass) / (self.mass + object.mass)
 				new_color[2] = (self.color[2] * self.mass + object.color[2] * object.mass) / (self.mass + object.mass)
+				new_color = map(lambda x: max(min(255, x), 0), new_color)
+			
 
 				new_object = Object(self.pos, new_velocity,  new_color, self.mass + object.mass)
 				object.delete()
