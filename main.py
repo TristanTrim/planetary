@@ -106,6 +106,7 @@ class Object():
 				new_object = Object(self.pos, new_velocity,  new_color, self.mass + object.mass)
 				object.delete()
 				self.delete()
+				new_object.tick(major_objects)
 				major_objects.append(new_object)	
 				return
 
