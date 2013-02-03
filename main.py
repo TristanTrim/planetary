@@ -87,6 +87,12 @@ class Object():
 				return
 
 			if distance < (self.size + object.size) and self.mass >= object.mass and (self.mass or object.mass):
+
+				if self.mass == -object.mass:
+					object.delete()
+					self.delete()
+					return
+
 				new_velocity = [0, 0]
 				new_velocity[0] = (self.vel[0] * self.mass + object.vel[0] * object.mass) / (self.mass + object.mass)
 				new_velocity[1] = (self.vel[1] * self.mass + object.vel[1] * object.mass) / (self.mass + object.mass)
@@ -100,7 +106,6 @@ class Object():
 				new_object = Object(self.pos, new_velocity,  new_color, self.mass + object.mass)
 				object.delete()
 				self.delete()
-				new_object.tick(major_objects)
 				major_objects.append(new_object)	
 				return
 
