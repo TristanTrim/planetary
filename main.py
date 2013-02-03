@@ -14,15 +14,13 @@ SIZE_VALUES = [SIZE_FACTOR * pow(x, 1/3.0) for x in MASS_VALUES]
 DELETE_MARGIN = [1, 1]
 from screen import SCREEN_RES
 DELETE_MARGIN = [DELETE_MARGIN[0]*SCREEN_RES[0], DELETE_MARGIN[1] * SCREEN_RES[1]]
-
 G = 4
 WHITE = (255, 255, 255)
-
 settings = {'paused': False, 'gravity-min': True, 'gravity-maj': True}
-
 SWARM_MAX_VEL = 10
 SWARM_COUNT = 10
 SPAWNER_DELETE_DISTANCE = 25
+
 class Spawner():
 	def __init__(self, position, obj_velocity, intensity):
 		self.pos = position
@@ -32,6 +30,7 @@ class Spawner():
 	def delete(self):
 		global spawners
 		spawners.remove(self)
+
 	def spawn(self):
 		global minor_objects
 		for i in range(self.intensity):
@@ -50,7 +49,6 @@ class Object():
 		self.mass = mass 
 		self.size = 0.5 * pow(abs(mass), 1/3.0)	
 		
-
 	def delete(self):
 		if self.mass:
 			global major_objects
@@ -80,6 +78,7 @@ class Object():
 		for object in attractors:
 			if object == self:
 				continue
+
 			distance = sqrt( ((self.pos[0] - object.pos[0])**2) + ((self.pos[1] - object.pos[1])**2))
 					
 			if self.mass == 0 and distance < object.size:
@@ -87,7 +86,6 @@ class Object():
 				return
 
 			if distance < (self.size + object.size) and self.mass >= object.mass and (self.mass or object.mass):
-
 				if self.mass == -object.mass:
 					object.delete()
 					self.delete()
@@ -102,7 +100,6 @@ class Object():
 				new_color[2] = (self.color[2] * self.mass + object.color[2] * object.mass) / (self.mass + object.mass)
 				new_color = map(lambda x: max(min(255, x), 0), new_color)
 			
-
 				new_object = Object(self.pos, new_velocity,  new_color, self.mass + object.mass)
 				object.delete()
 				self.delete()
@@ -126,22 +123,22 @@ class Object():
 		self.pos[1] += self.vel[1] * TIMEFACTOR
 
 class InputHandler():
-	mouse_pos = (0, 0)
-	mouse_initial_pos = (0, 0)
-	mouse_holding = False
-	mass_selection = 0
-	display_data = {'holding': False, 'init_pos': (0, 0), 'pos': (0, 0), 'size': 0}
-	next_color = (randint(0, 255), randint(0, 255), randint(0, 255))
-	swarm_holding = False
-	repulsor_mode = False
-	def handle_input(self, Screen):
+	def __init__(self):
+		self.mouse_pos = (0, 0)
+		self.mouse_initial_pos = (0, 0)
+		self.mouse_holding = False
+		self.mass_selection = 0
+		self.display_data = {'holding': False, 'init_pos': (0, 0), 'pos': (0, 0), 'size': 0}
+		self.next_color = (randint(0, 255), randint(0, 255), randint(0, 255))
+		self.swarm_holding = False
+		self.repulsor_mode = False
 
+	def handle_input(self, Screen):
 		def distance(object):
 			return sqrt( (self.mouse_pos[0] - object.pos[0])**2 + (self.mouse_pos[1] - object.pos[1]) **2)
 
 		events = Screen.get_events()
 		self.mouse_pos = Screen.get_mouse_pos()
-
 		global major_objects, minor_objects, settings
 
 		for event in events:
@@ -152,12 +149,14 @@ class InputHandler():
 						if distance(object) < object.size:
 							object.vel = [0, 0]
 							found = True
+
 					if not found:
 						if self.swarm_holding:
 							self.add_spawner()
 						else:
 							self.mouse_holding = True
 							self.mouse_initial_pos = self.mouse_pos
+
 				elif event.button == 3:
 					if self.mouse_holding:
 						self.mouse_holding = False
@@ -165,17 +164,21 @@ class InputHandler():
 						for object in major_objects:
 							if distance(object) < object.size:
 								object.delete()
+
 						for spawner in spawners:
 							if distance(spawner) < SPAWNER_DELETE_DISTANCE:
 								spawner.delete()
+
 				elif event.button == 4:
 					self.mass_selection = min(self.mass_selection+1, 9)
 				elif event.button == 5:
 					self.mass_selection = max(self.mass_selection-1, 0)
+
 			elif event.type == MOUSEBUTTONUP and event.button == 1 and self.mouse_holding:
 				self.mouse_holding = False
 				if not self.swarm_holding:
 					self.add_object()
+
 			elif event.type == KEYDOWN:
 				if event.key in NUMBER_KEYS:
 					self.mass_selection = NUMBER_KEYS.index(event.key)
@@ -199,9 +202,11 @@ class InputHandler():
 							object.mass = -object.mass
 					if not found:
 						self.repulsor_mode = not self.repulsor_mode
+
 			elif event.type == KEYUP:
 				if event.key == K_s:
 					self.swarm_holding = False
+
 			elif event.type == QUIT:
 				exit()
 
@@ -210,12 +215,15 @@ class InputHandler():
 				swarm_count = SWARM_COUNT
 			else:
 				swarm_count = 1
+
 			pos = self.mouse_initial_pos
 			velocity = [self.mouse_pos[0] - self.mouse_initial_pos[0], self.mouse_pos[1] - self.mouse_initial_pos[1]]
+
 			for i in range(swarm_count):
 				velocity[0] += randint(-SWARM_MAX_VEL, SWARM_MAX_VEL)
 				velocity[1] += randint(-SWARM_MAX_VEL, SWARM_MAX_VEL) 
 				minor_objects.append(Object(pos, velocity, WHITE))
+
 		self.display_data = {'holding': self.mouse_holding and not self.swarm_holding, 'init_pos': self.mouse_initial_pos, 'pos': self.mouse_pos, 'size': SIZE_VALUES[self.mass_selection], 'color': self.next_color, 'repulsor_mode': self.repulsor_mode}
 
 	def add_object(self):
@@ -265,6 +273,7 @@ while True:
 			object.tick(major_objects)
 		for spawner in spawners:
 			spawner.spawn()
+
 	InputHandler.handle_input(Screen)	
 	Screen.frame(major_objects+minor_objects, InputHandler.display_data)
 	Clock.tick(FRAMERATE)	
