@@ -8,19 +8,17 @@ WHITE = (255, 255, 255)
 ARROW_TIP_SIZE = 10
 REP_MARKER_SIZE = 0.2
 
-
 class Screen():
 	def __init__(self, sizes):
 		pygame.init()
 		self.window = pygame.display.set_mode(SCREEN_RES)
 		pygame.display.set_caption(CAPTION.encode('utf-8'))
 		pygame.display.flip()
-
 		self.sizes = sizes
-
 
 	def frame(self, objects, mouse_data):
 		self.window.fill(BLACK)
+
 		for object in objects:
 			pygame.draw.circle(self.window, object.color, map(lambda x: int(x), object.pos), int(object.size))
 			if object.mass < 0:
@@ -36,8 +34,10 @@ class Screen():
 				color = WHITE
 			else:
 				color = mouse_data['color']
+
 			pygame.draw.circle(self.window, color, mouse_data['init_pos'], int(mouse_data['size']))
 			pygame.draw.line(self.window, color, mouse_data['init_pos'], mouse_data['pos'])		
+
 			if mouse_data['repulsor_mode']:
 				pygame.draw.circle(self.window, WHITE, mouse_data['init_pos'], int(mouse_data['size'] * REP_MARKER_SIZE))	
 
@@ -52,17 +52,18 @@ class Screen():
 					angle = radians(270)
 			else:
 				angle = -atan(rel_pos[1] / abs(float(rel_pos[0])))
+
 			arrow_tip = pygame.transform.rotate(arrow_tip, degrees(angle))
 
 			if rel_pos[0] < 0: 
 				arrow_tip = pygame.transform.flip(arrow_tip, True, False)
+
 			self.window.blit(arrow_tip, (mouse_data['pos'][0]-(arrow_tip.get_width()/2), mouse_data['pos'][1]-(arrow_tip.get_height()/2)))
 
 		pygame.display.flip()
 
 	def get_events(self):
 		return pygame.event.get()
-
 	def get_mouse_pos(self):
 		return pygame.mouse.get_pos()
 	def get_mods(self):
