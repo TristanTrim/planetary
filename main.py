@@ -15,8 +15,7 @@ MASS_VALUES[0] = 0
 SIZE_FACTOR = 0.5
 SIZE_VALUES = [SIZE_FACTOR * pow(x, 1/3.0) for x in MASS_VALUES]
 DELETE_MARGIN = [1, 1]
-from screen import SCREEN_RES
-DELETE_MARGIN = [DELETE_MARGIN[0]*SCREEN_RES[0], DELETE_MARGIN[1] * SCREEN_RES[1]]
+from screen import DEFAULT_SCREEN_RES as screen_size
 G = 4
 WHITE = (255, 255, 255)
 settings = {'paused': False, 'gravity-min': True, 'gravity-maj': True, 'framerate': DEFAULT_FRAMERATE_SETTING}
@@ -66,13 +65,13 @@ class Object():
 				minor_objects.remove(self)
 
 	def tick(self, attractors):
-		if self.pos[0] > DELETE_MARGIN[0] + SCREEN_RES[0]:
+		if self.pos[0] > (DELETE_MARGIN[0]+1) * screen_size[0]:
 			self.delete()
 			return
 		if self.pos[0] < -DELETE_MARGIN[0]:
 			self.delete()
 			return
-		if self.pos[1] > DELETE_MARGIN[1] + SCREEN_RES[1]:
+		if self.pos[1] > (DELETE_MARGIN[1]+1) * screen_size[1]:
 			self.delete()
 			return
 		if self.pos[1] < -DELETE_MARGIN[1]:
@@ -147,7 +146,7 @@ class InputHandler():
 
 		events = Screen.get_events()
 		self.mouse_pos = Screen.get_mouse_pos()
-		global major_objects, minor_objects, settings, timefactor
+		global major_objects, minor_objects, settings
 
 		for event in events:
 			if event.type == MOUSEBUTTONDOWN:
@@ -198,6 +197,7 @@ class InputHandler():
 					settings['gravity-min'] = not settings['gravity-min']
 				elif event.key == K_f:
 					settings['framerate'] = (settings['framerate'] + 1) % len(FRAMERATE_VALUES)
+					global timefactor
 					timefactor = TIME_RATIO / FRAMERATE_VALUES[settings['framerate']]
 					self.text = "Framerate:" + FRAMERATE_LABELS[settings['framerate']]	
 					self.text_timeout = 0
@@ -219,7 +219,9 @@ class InputHandler():
 			elif event.type == KEYUP:
 				if event.key == K_s:
 					self.swarm_holding = False
-
+			elif event.type == VIDEORESIZE:
+				global screen_size
+				Screen.screen_size = screen_size = event.size
 			elif event.type == QUIT:
 				exit()
 

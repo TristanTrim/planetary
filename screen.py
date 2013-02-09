@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import SRCALPHA
 from math import atan, degrees, radians
-SCREEN_RES = (1024, 768)
+DEFAULT_SCREEN_RES = (1024, 768)
 TEXT_OFFSET = (175, 25)
 CAPTION = "Planetary"
 BLACK = (0, 0, 0)
@@ -13,13 +13,13 @@ FONT_SIZE = 25
 class Screen():
 	def __init__(self, sizes):
 		pygame.init()
-		self.window = pygame.display.set_mode(SCREEN_RES)
+		self.screen_size = DEFAULT_SCREEN_RES
+		self.window = pygame.display.set_mode(self.screen_size, pygame.RESIZABLE)
 		pygame.display.set_caption(CAPTION.encode('utf-8'))
-		pygame.display.flip()
 		self.sizes = sizes
-
 		pygame.font.init()
                 self.font = pygame.font.Font(pygame.font.match_font(pygame.font.get_default_font()), FONT_SIZE)
+		pygame.display.flip()
 
 	def frame(self, objects, data):
 		self.window.fill(BLACK)
@@ -68,7 +68,7 @@ class Screen():
 			
 		if data['text']:
 			textbox = self.font.render(data['text'], True, WHITE, BLACK)
-			self.window.blit(textbox, (SCREEN_RES[0] - TEXT_OFFSET[0], SCREEN_RES[1] - TEXT_OFFSET[1]))
+			self.window.blit(textbox, (self.screen_size[0] - TEXT_OFFSET[0], self.screen_size[1] - TEXT_OFFSET[1]))
 
 		pygame.display.flip()
 
