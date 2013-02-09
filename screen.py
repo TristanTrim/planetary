@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import SRCALPHA
 from math import atan, degrees, radians
-SCREEN_RES = (800, 600)
+SCREEN_RES = (1024, 768)
 TEXT_OFFSET = (175, 25)
 CAPTION = "Planetary"
 BLACK = (0, 0, 0)
