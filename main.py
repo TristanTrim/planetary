@@ -4,8 +4,11 @@ from pygame.locals import *
 from math import sqrt
 from random import randint
 
-FRAMERATE = 60
-TIMEFACTOR = 0.025
+
+FRAMERATE_VALUES = [20, 30, 60]
+DEFAULT_FRAMERATE_SETTING = 2
+FRAMERATE_LABELS = ['Low', 'Medium', 'High']
+TIME_RATIO = 1.5 # more = slower simulation
 NUMBER_KEYS = [K_0, K_1, K_2, K_3, K_4, K_5, K_6, K_7, K_8, K_9]
 MASS_VALUES = [1000 * 2**x for x in range(10)]
 MASS_VALUES[0] = 0
@@ -16,10 +19,13 @@ from screen import SCREEN_RES
 DELETE_MARGIN = [DELETE_MARGIN[0]*SCREEN_RES[0], DELETE_MARGIN[1] * SCREEN_RES[1]]
 G = 4
 WHITE = (255, 255, 255)
-settings = {'paused': False, 'gravity-min': True, 'gravity-maj': True}
+settings = {'paused': False, 'gravity-min': True, 'gravity-maj': True, 'framerate': DEFAULT_FRAMERATE_SETTING}
+timefactor = TIME_RATIO / FRAMERATE_VALUES[settings['framerate']]
 SWARM_MAX_VEL = 10
 SWARM_COUNT = 10
 SPAWNER_DELETE_DISTANCE = 25
+TEXT_TIMEOUT = 4
+
 
 class Spawner():
 	def __init__(self, position, obj_velocity, intensity):
@@ -116,11 +122,11 @@ class Object():
 			self.update()	
 
 	def update(self):		
-		self.vel[0] += self.gravity[0] * TIMEFACTOR
-		self.vel[1] += self.gravity[1] * TIMEFACTOR
+		self.vel[0] += self.gravity[0] * timefactor
+		self.vel[1] += self.gravity[1] * timefactor
 		
-		self.pos[0] += self.vel[0] * TIMEFACTOR
-		self.pos[1] += self.vel[1] * TIMEFACTOR
+		self.pos[0] += self.vel[0] * timefactor
+		self.pos[1] += self.vel[1] * timefactor
 
 class InputHandler():
 	def __init__(self):
@@ -132,6 +138,8 @@ class InputHandler():
 		self.next_color = (randint(0, 255), randint(0, 255), randint(0, 255))
 		self.swarm_holding = False
 		self.repulsor_mode = False
+		self.text = ''
+		self.text_timeout = 0
 
 	def handle_input(self, Screen):
 		def distance(object):
@@ -139,7 +147,7 @@ class InputHandler():
 
 		events = Screen.get_events()
 		self.mouse_pos = Screen.get_mouse_pos()
-		global major_objects, minor_objects, settings
+		global major_objects, minor_objects, settings, timefactor
 
 		for event in events:
 			if event.type == MOUSEBUTTONDOWN:
@@ -188,6 +196,11 @@ class InputHandler():
 					settings['gravity-maj'] = not settings['gravity-maj']
 				elif event.key == K_h:
 					settings['gravity-min'] = not settings['gravity-min']
+				elif event.key == K_f:
+					settings['framerate'] = (settings['framerate'] + 1) % len(FRAMERATE_VALUES)
+					timefactor = TIME_RATIO / FRAMERATE_VALUES[settings['framerate']]
+					self.text = "Framerate:" + FRAMERATE_LABELS[settings['framerate']]	
+					self.text_timeout = 0
 				elif event.key == K_z:
 					minor_objects = []
 				elif event.key == K_x:
@@ -224,7 +237,14 @@ class InputHandler():
 				velocity[1] += randint(-SWARM_MAX_VEL, SWARM_MAX_VEL) 
 				minor_objects.append(Object(pos, velocity, WHITE))
 
-		self.display_data = {'holding': self.mouse_holding and not self.swarm_holding, 'init_pos': self.mouse_initial_pos, 'pos': self.mouse_pos, 'size': SIZE_VALUES[self.mass_selection], 'color': self.next_color, 'repulsor_mode': self.repulsor_mode}
+		if self.text:
+			if self.text_timeout > TEXT_TIMEOUT * FRAMERATE_VALUES[settings['framerate']]:
+				self.text = ''
+			else:
+				self.text_timeout += 1
+
+		self.display_data = {'holding': self.mouse_holding and not self.swarm_holding, 'init_pos': self.mouse_initial_pos, 'pos': self.mouse_pos, 'size': SIZE_VALUES[self.mass_selection], 'color': self.next_color, 'repulsor_mode': self.repulsor_mode, 'text': self.text}
+		
 
 	def add_object(self):
 		velocity = (self.mouse_pos[0] - self.mouse_initial_pos[0], self.mouse_pos[1] - self.mouse_initial_pos[1])
@@ -276,4 +296,4 @@ while True:
 
 	InputHandler.handle_input(Screen)	
 	Screen.frame(major_objects+minor_objects, InputHandler.display_data)
-	Clock.tick(FRAMERATE)	
+	Clock.tick(FRAMERATE_VALUES[settings['framerate']])	

@@ -18,3 +18,5 @@ NOTE: creating permanent high-intensity (with shift) spawners is not recommended
 p: toggle pause
 g: toggle gravity for major objects
 h: toggle gravity for minor objects
+
+f: toggle framerate (higher framerate means smoother simulation but lower performance)

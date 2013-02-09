@@ -1,12 +1,14 @@
 import pygame
 from pygame.locals import SRCALPHA
 from math import atan, degrees, radians
-SCREEN_RES = (1024, 768)
+SCREEN_RES = (800, 600)
+TEXT_OFFSET = (175, 25)
 CAPTION = "Planetary"
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 ARROW_TIP_SIZE = 10
 REP_MARKER_SIZE = 0.2
+FONT_SIZE = 25
 
 class Screen():
 	def __init__(self, sizes):
@@ -16,7 +18,10 @@ class Screen():
 		pygame.display.flip()
 		self.sizes = sizes
 
-	def frame(self, objects, mouse_data):
+		pygame.font.init()
+                self.font = pygame.font.Font(pygame.font.match_font(pygame.font.get_default_font()), FONT_SIZE)
+
+	def frame(self, objects, data):
 		self.window.fill(BLACK)
 
 		for object in objects:
@@ -24,26 +29,26 @@ class Screen():
 			if object.mass < 0:
 				pygame.draw.circle(self.window, WHITE, map(lambda x: int(x), object.pos), int(object.size * REP_MARKER_SIZE))
 		
-		if mouse_data['holding']:
+		if data['holding']:
 			pygame.mouse.set_visible(False)
 		else:
 			pygame.mouse.set_visible(True)				
 
-		if mouse_data['holding']:
-			if mouse_data['size'] == 0:
+		if data['holding']:
+			if data['size'] == 0:
 				color = WHITE
 			else:
-				color = mouse_data['color']
+				color = data['color']
 
-			pygame.draw.circle(self.window, color, mouse_data['init_pos'], int(mouse_data['size']))
-			pygame.draw.line(self.window, color, mouse_data['init_pos'], mouse_data['pos'])		
+			pygame.draw.circle(self.window, color, data['init_pos'], int(data['size']))
+			pygame.draw.line(self.window, color, data['init_pos'], data['pos'])		
 
-			if mouse_data['repulsor_mode']:
-				pygame.draw.circle(self.window, WHITE, mouse_data['init_pos'], int(mouse_data['size'] * REP_MARKER_SIZE))	
+			if data['repulsor_mode']:
+				pygame.draw.circle(self.window, WHITE, data['init_pos'], int(data['size'] * REP_MARKER_SIZE))	
 
 			arrow_tip = pygame.Surface((ARROW_TIP_SIZE, ARROW_TIP_SIZE), SRCALPHA)			
 			pygame.draw.polygon(arrow_tip, color, ((0, 0), (ARROW_TIP_SIZE, ARROW_TIP_SIZE/2), (0, ARROW_TIP_SIZE)))
-			rel_pos = (mouse_data['pos'][0] - mouse_data['init_pos'][0], mouse_data['pos'][1] - mouse_data['init_pos'][1])
+			rel_pos = (data['pos'][0] - data['init_pos'][0], data['pos'][1] - data['init_pos'][1])
 	
 			if rel_pos[0] == 0:
 				if rel_pos[1] < 0:
@@ -58,7 +63,12 @@ class Screen():
 			if rel_pos[0] < 0: 
 				arrow_tip = pygame.transform.flip(arrow_tip, True, False)
 
-			self.window.blit(arrow_tip, (mouse_data['pos'][0]-(arrow_tip.get_width()/2), mouse_data['pos'][1]-(arrow_tip.get_height()/2)))
+			self.window.blit(arrow_tip, (data['pos'][0]-(arrow_tip.get_width()/2), data['pos'][1]-(arrow_tip.get_height()/2)))
+
+			
+		if data['text']:
+			textbox = self.font.render(data['text'], True, WHITE, BLACK)
+			self.window.blit(textbox, (SCREEN_RES[0] - TEXT_OFFSET[0], SCREEN_RES[1] - TEXT_OFFSET[1]))
 
 		pygame.display.flip()
 
