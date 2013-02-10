@@ -221,7 +221,8 @@ class InputHandler():
 					self.swarm_holding = False
 			elif event.type == VIDEORESIZE:
 				global screen_size
-				Screen.screen_size = screen_size = event.size
+				screen_size = event.size
+				Screen.set_size(event.size)
 			elif event.type == QUIT:
 				exit()
 

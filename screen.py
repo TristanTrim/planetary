@@ -65,13 +65,15 @@ class Screen():
 
 			self.window.blit(arrow_tip, (data['pos'][0]-(arrow_tip.get_width()/2), data['pos'][1]-(arrow_tip.get_height()/2)))
 
-			
 		if data['text']:
 			textbox = self.font.render(data['text'], True, WHITE, BLACK)
 			self.window.blit(textbox, (self.screen_size[0] - TEXT_OFFSET[0], self.screen_size[1] - TEXT_OFFSET[1]))
 
 		pygame.display.flip()
 
+	def set_size(self, size):
+		self.screen_size = size
+		self.window = pygame.display.set_mode(size, pygame.RESIZABLE)
 	def get_events(self):
 		return pygame.event.get()
 	def get_mouse_pos(self):
