@@ -213,6 +213,7 @@ class InputHandler():
 					for object in major_objects:
 						if distance(object) < object.size:
 							object.mass = -object.mass
+							found = True
 					if not found:
 						self.repulsor_mode = not self.repulsor_mode
 
