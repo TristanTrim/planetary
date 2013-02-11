@@ -2,7 +2,7 @@ import screen
 from pygame.time import Clock
 from pygame.locals import *
 from math import sqrt
-from random import randint
+from random import randint, uniform
 
 
 FRAMERATE_VALUES = [20, 30, 60]
@@ -40,8 +40,8 @@ class Spawner():
 		global minor_objects
 		for i in range(self.intensity):
 			velocity = list(self.o_vel)
-			velocity[0] += randint(-SWARM_MAX_VEL, SWARM_MAX_VEL)
-			velocity[1] += randint(-SWARM_MAX_VEL, SWARM_MAX_VEL)
+			velocity[0] += uniform(-SWARM_MAX_VEL, SWARM_MAX_VEL)
+			velocity[1] += uniform(-SWARM_MAX_VEL, SWARM_MAX_VEL)
 
 			object = Object(self.pos, velocity)
 			minor_objects.append(object)
@@ -237,8 +237,8 @@ class InputHandler():
 			velocity = [self.mouse_pos[0] - self.mouse_initial_pos[0], self.mouse_pos[1] - self.mouse_initial_pos[1]]
 
 			for i in range(swarm_count):
-				velocity[0] += randint(-SWARM_MAX_VEL, SWARM_MAX_VEL)
-				velocity[1] += randint(-SWARM_MAX_VEL, SWARM_MAX_VEL) 
+				velocity[0] += uniform(-SWARM_MAX_VEL, SWARM_MAX_VEL)
+				velocity[1] += uniform(-SWARM_MAX_VEL, SWARM_MAX_VEL) 
 				minor_objects.append(Object(pos, velocity, WHITE))
 
 		if self.text:
