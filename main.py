@@ -7,6 +7,7 @@ from random import randint, uniform
 
 FRAMERATE_VALUES = [20, 30, 60]
 DEFAULT_FRAMERATE_SETTING = 2
+BASE_SPAWN_RATE = FRAMERATE_VALUES[DEFAULT_FRAMERATE_SETTING]
 FRAMERATE_LABELS = ['Low', 'Medium', 'High']
 TIME_RATIO = 1.5 # more = slower simulation
 NUMBER_KEYS = [K_0, K_1, K_2, K_3, K_4, K_5, K_6, K_7, K_8, K_9]
@@ -31,20 +32,23 @@ class Spawner():
 		self.pos = position
 		self.o_vel = obj_velocity
 		self.intensity = intensity
+		self.spawn_counter = 0
 
 	def delete(self):
 		global spawners
 		spawners.remove(self)
 
 	def spawn(self):
+		self.spawn_counter += self.intensity * BASE_SPAWN_RATE
 		global minor_objects
-		for i in range(self.intensity):
+		while self.spawn_counter > FRAMERATE_VALUES[settings['framerate']]:
 			velocity = list(self.o_vel)
 			velocity[0] += uniform(-SWARM_MAX_VEL, SWARM_MAX_VEL)
 			velocity[1] += uniform(-SWARM_MAX_VEL, SWARM_MAX_VEL)
 
 			object = Object(self.pos, velocity)
 			minor_objects.append(object)
+			self.spawn_counter -= FRAMERATE_VALUES[settings['framerate']]
 
 class Object():
 	def __init__(self, position, velocity, color=WHITE, mass=0):
@@ -135,10 +139,10 @@ class InputHandler():
 		self.mass_selection = 0
 		self.display_data = {'holding': False, 'init_pos': (0, 0), 'pos': (0, 0), 'size': 0}
 		self.next_color = (randint(0, 255), randint(0, 255), randint(0, 255))
-		self.swarm_holding = False
 		self.repulsor_mode = False
 		self.text = ''
 		self.text_timeout = 0
+		self.manual_spawner = None
 
 	def handle_input(self, Screen):
 		def distance(object):
@@ -156,20 +160,18 @@ class InputHandler():
 						if distance(object) < object.size:
 							object.vel = [0, 0]
 							found = True
-
 					if not found:
-						if self.swarm_holding:
+						if self.manual_spawner:
 							self.add_spawner()
 						else:
-							self.mouse_holding = True
 							self.mouse_initial_pos = self.mouse_pos
+							self.mouse_holding = True
 
 				elif event.button == 3:
 					if self.mouse_holding:
 						self.mouse_holding = False
 					else:
 						for object in major_objects:
-							if distance(object) < object.size:
 								object.delete()
 
 						for spawner in spawners:
@@ -183,7 +185,7 @@ class InputHandler():
 
 			elif event.type == MOUSEBUTTONUP and event.button == 1 and self.mouse_holding:
 				self.mouse_holding = False
-				if not self.swarm_holding:
+				if not self.manual_spawner:
 					self.add_object()
 
 			elif event.type == KEYDOWN:
@@ -206,8 +208,7 @@ class InputHandler():
 				elif event.key == K_x:
 					major_objects = []
 				elif event.key == K_s:
-					self.swarm_holding = True
-					self.mouse_initial_pos = self.mouse_pos
+					self.manual_spawner = Spawner(self.mouse_pos, (0, 0), 1) 
 				elif event.key == K_q:
 					found = False
 					for object in major_objects:
@@ -219,7 +220,7 @@ class InputHandler():
 
 			elif event.type == KEYUP:
 				if event.key == K_s:
-					self.swarm_holding = False
+					self.manual_spawner = None
 			elif event.type == VIDEORESIZE:
 				global screen_size
 				screen_size = event.size
@@ -227,19 +228,14 @@ class InputHandler():
 			elif event.type == QUIT:
 				exit()
 
-		if self.swarm_holding:
+		if self.manual_spawner:
 			if Screen.get_mods() & KMOD_SHIFT:
-				swarm_count = SWARM_COUNT
+				self.manual_spawner.intensity = SWARM_COUNT
 			else:
-				swarm_count = 1
+				self.manual_spawner.intensity = 1
 
-			pos = self.mouse_initial_pos
-			velocity = [self.mouse_pos[0] - self.mouse_initial_pos[0], self.mouse_pos[1] - self.mouse_initial_pos[1]]
-
-			for i in range(swarm_count):
-				velocity[0] += uniform(-SWARM_MAX_VEL, SWARM_MAX_VEL)
-				velocity[1] += uniform(-SWARM_MAX_VEL, SWARM_MAX_VEL) 
-				minor_objects.append(Object(pos, velocity, WHITE))
+			self.manual_spawner.o_vel = [self.mouse_pos[0] - self.manual_spawner.pos[0], self.mouse_pos[1] - self.manual_spawner.pos[1]]
+			self.manual_spawner.spawn()
 
 		if self.text:
 			if self.text_timeout > TEXT_TIMEOUT * FRAMERATE_VALUES[settings['framerate']]:
@@ -247,7 +243,7 @@ class InputHandler():
 			else:
 				self.text_timeout += 1
 
-		self.display_data = {'holding': self.mouse_holding and not self.swarm_holding, 'init_pos': self.mouse_initial_pos, 'pos': self.mouse_pos, 'size': SIZE_VALUES[self.mass_selection], 'color': self.next_color, 'repulsor_mode': self.repulsor_mode, 'text': self.text}
+		self.display_data = {'holding': self.mouse_holding and not self.manual_spawner, 'init_pos': self.mouse_initial_pos, 'pos': self.mouse_pos, 'size': SIZE_VALUES[self.mass_selection], 'color': self.next_color, 'repulsor_mode': self.repulsor_mode, 'text': self.text}
 		
 
 	def add_object(self):
@@ -276,9 +272,9 @@ class InputHandler():
 
 	def add_spawner(self):
 		global spawners
-		velocity = (self.mouse_pos[0] - self.mouse_initial_pos[0], self.mouse_pos[1] - self.mouse_initial_pos[1])
+		velocity = (self.mouse_pos[0] - self.manual_spawner.pos[0], self.mouse_pos[1] - self.manual_spawner.pos[1])
 		intensity = SWARM_COUNT if Screen.get_mods() & KMOD_SHIFT else 1	
-		spawners.append(Spawner(self.mouse_initial_pos, velocity, intensity))
+		spawners.append(Spawner(self.manual_spawner.pos, velocity, intensity))
 
 Screen = screen.Screen(SIZE_VALUES)
 Clock = Clock()
@@ -297,7 +293,7 @@ while True:
 			object.tick(major_objects)
 		for spawner in spawners:
 			spawner.spawn()
-
+	print len(minor_objects)
 	InputHandler.handle_input(Screen)	
 	Screen.frame(major_objects+minor_objects, InputHandler.display_data)
 	Clock.tick(FRAMERATE_VALUES[settings['framerate']])	
