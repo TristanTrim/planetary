@@ -172,6 +172,7 @@ class InputHandler():
 						self.mouse_holding = False
 					else:
 						for object in major_objects:
+							if distance(object) < object.size:
 								object.delete()
 
 						for spawner in spawners:
@@ -293,7 +294,6 @@ while True:
 			object.tick(major_objects)
 		for spawner in spawners:
 			spawner.spawn()
-	print len(minor_objects)
 	InputHandler.handle_input(Screen)	
 	Screen.frame(major_objects+minor_objects, InputHandler.display_data)
 	Clock.tick(FRAMERATE_VALUES[settings['framerate']])	
