@@ -72,13 +72,13 @@ class Object():
 		if self.pos[0] > (DELETE_MARGIN[0]+1) * screen_size[0]:
 			self.delete()
 			return
-		if self.pos[0] < -DELETE_MARGIN[0]:
+		if self.pos[0] < -DELETE_MARGIN[0] * screen_size[0]:
 			self.delete()
 			return
 		if self.pos[1] > (DELETE_MARGIN[1]+1) * screen_size[1]:
 			self.delete()
 			return
-		if self.pos[1] < -DELETE_MARGIN[1]:
+		if self.pos[1] < -DELETE_MARGIN[1] * screen_size[1]:
 			self.delete()
 			return
 
