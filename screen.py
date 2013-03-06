@@ -9,6 +9,15 @@ WHITE = (255, 255, 255)
 ARROW_TIP_SIZE = 10
 REP_MARKER_SIZE = 0.2
 FONT_SIZE = 25
+BUTTON_FONT_SIZE = 25
+POPUP_FONT_SIZE = 25
+POPUP_SPACING = 10
+GREY = (150, 150, 150)
+
+TOOLBAR_WIDTH = 100
+
+class events():
+	STANDARD_MODE = 1
 
 class GuiBox():
 	def __init__(self, pos, size, border_color=WHITE, color=BLACK):
@@ -16,21 +25,33 @@ class GuiBox():
 		self.size = size
 		self.border_color = border_color
 		self.fill_color = color
+		self.subelements = []
 
-	def draw_border(self, surface, color=self.border_color):
-		pygame.draw.rect(surface, color, pygame.Rect((0, 0), self.size, 1))
+	def draw_border(self, surface, color):
+		if not color:
+			color = self.border_color
+		
+		pygame.draw.rect(surface, color, (0, 0, self.size[0], self.size[1]), 1)
 	
 	def draw(self, target):
-		for i, element in enumerate(self.subelements):
-			element.draw(self, self.subelements[i][1])
 		surface = pygame.Surface(self.size)
-		surface.fill(self.fill_color) if self.fill_color != BLACK else pass
-		self.draw_border(surface)
+
+		if self.fill_color:
+			surface.fill(self.fill_color)
+		else:
+			self.fill_color != BLACK
+
+
+		for element in self.subelements:
+			element.draw(surface)
+
+
+		self.draw_border(surface, self.border_color)
 		
 		target.blit(surface, self.pos)
 
-	def add_subelement(self, element, pos):
-		self.subelements.append([element, pos])
+	def add_subelement(self, element):
+		self.subelements.append(element)
 
 class Button(GuiBox):
 	def __init__(self, pos, size, event_down, content, state_count=0, toggleable=False, event_up=None, border_color=WHITE, color=BLACK, font_size=BUTTON_FONT_SIZE):
@@ -38,7 +59,7 @@ class Button(GuiBox):
 		self.size = size
 		self.border_color = border_color
 		self.fill_color = color
-		self.event = event
+		self.event_down = event_down
 		self.toggleable = toggleable
 		self.text = content #fixme
 		self.active = False
@@ -52,30 +73,34 @@ class Button(GuiBox):
 	def check(self):
 		mouse_pos = pygame.mouse.get_pos()
 		if (self.pos[0] < x < self.pos[0]+self.size[0] and self.pos[1] < y < self.pos[1]+self.size[1]):
-					if not self.active:
-						self.active = True
-						pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'event': BUTTON_ACTIVE, 'source': self}))
+				if not self.active:
+					self.active = True
+					pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'event': BUTTON_ACTIVE, 'source': self}))
 				else:
 					if self.active:
 						self.active = False
-						pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'event': BUTTON_INACTIVE, 'source': self})		
+						pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'event': BUTTON_INACTIVE, 'source': self}))		
 	def click(self):
                 pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'event': BUTTON_CLICK, 'source': self}))
 
-	def draw(self, target, data):
-		for i, element in enumerate(self.subelements):
-			element.draw(self, self.subelements[i][1])
+	def draw(self, target):
 
 		surface = pygame.Surface(self.size)
+		for element in self.subelements:
+			element.draw(surface)
+
 		draw_color = self.border_color if not self.active else self.fill_color
 		background_color = self.fill_color if not self.active else self.border_color
 
-		surface.fill(background_color) if background_color != BLACK else pass
+		if background_color:
+			surface.fill(background_color)
 		self.draw_border(surface, draw_color)
-		text_surface = pygame.font.render(self.text, True, draw_color, background_color)
+		text_surface = self.font.render(self.text, True, draw_color, background_color)
 			
 		surface.blit(text_surface, (surface.get_size()[0]/2 - text_surface.get_size()[0]/2, surface.get_size()[1]/2 - text_surface.get_size()[1]/2))
-		target.blit(surface, (data['pos'][0] - surface.get_size()[0]/2, data['pos'][1] - surface.get_size()/2))
+		pygame.image.save(surface, "a.png")
+
+		target.blit(surface, self.pos)
 
 class Popup(GuiBox):
 	def __init__(self, text, option_text, options, anchor, offset, border_color=WHITE, text_color=WHITE, grey_color=GREY, background_color=BLACK, font_size=POPUP_FONT_SIZE, spacing = POPUP_SPACING):
@@ -106,7 +131,7 @@ class Popup(GuiBox):
 		line_surfaces = []
 		for i, line in enumerate(self.text):
 			if hilight != None:
-				color = text_color if hilight == i else color = grey_color
+				color = text_color if hilight == i else grey_color
 			else:
 				color = text_color
 			line_surfaces.append(self.font.render(line, True, color, background_color))
@@ -136,10 +161,11 @@ class Screen():
 		pygame.display.flip()
 
 		self.toolbar = GuiBox((0, 0), (TOOLBAR_WIDTH, self.screen_size[1]))
-		
+		self.toolbar.add_subelement(Button((0, 0), (TOOLBAR_WIDTH-20, TOOLBAR_WIDTH-20), events.STANDARD_MODE, "std"))		
 
 	def frame(self, objects, data):
 		self.window.fill(BLACK)
+		self.toolbar.draw(self.window)
 
 		for object in objects:
 			pygame.draw.circle(self.window, object.color, map(lambda x: int(x), object.pos), int(object.size))
