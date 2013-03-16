@@ -18,6 +18,9 @@ TOOLBAR_WIDTH = 100
 
 class events():
 	STANDARD_MODE = 1
+	BUTTON_ACTIVE = 2
+	BUTTON_INACTIVE = 3
+	BUTTON_CLICK = 4
 
 class GuiBox():
 	def __init__(self, pos, size, border_color=WHITE, color=BLACK):
@@ -50,6 +53,10 @@ class GuiBox():
 		
 		target.blit(surface, self.pos)
 
+	def check(self):
+		for element in self.subelements:
+			element.check()
+
 	def add_subelement(self, element):
 		self.subelements.append(element)
 
@@ -71,17 +78,20 @@ class Button(GuiBox):
 			self.event_up = event_up 
 
 	def check(self):
-		mouse_pos = pygame.mouse.get_pos()
+		for element in self.subelements:
+			element.check()
+		
+		x, y = pygame.mouse.get_pos()
 		if (self.pos[0] < x < self.pos[0]+self.size[0] and self.pos[1] < y < self.pos[1]+self.size[1]):
-				if not self.active:
-					self.active = True
-					pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'event': BUTTON_ACTIVE, 'source': self}))
-				else:
-					if self.active:
-						self.active = False
-						pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'event': BUTTON_INACTIVE, 'source': self}))		
+			if not self.active:
+				self.active = True
+				pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'event': events.BUTTON_ACTIVE, 'source': self}))
+		else:
+			if self.active:
+				self.active = False
+				pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'event': events.BUTTON_INACTIVE, 'source': self}))		
 	def click(self):
-                pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'event': BUTTON_CLICK, 'source': self}))
+                pygame.event.post(pygame.event.Event(pygame.USEREVENT, {'event': self.event_down, 'source': self}))
 
 	def draw(self, target):
 
@@ -148,7 +158,11 @@ class Popup(GuiBox):
 			surface.blit(self.text_surface, (0, 0))
 			surface.blit(self.option_text_surface, (0, self.text_surface.get_size[1] + self.spacing))
 			surface.blit(self.options_surface, (0, self.size - self.options_surface.get_size()[1]))
-			
+		
+	def check(self):
+		for element in self.subelements:
+			element.check()
+	
 class Screen():
 	def __init__(self, sizes):
 		pygame.init()
@@ -160,12 +174,12 @@ class Screen():
                 self.font = pygame.font.Font(pygame.font.match_font(pygame.font.get_default_font()), FONT_SIZE)
 		pygame.display.flip()
 
+		self.active_gui_element = None
 		self.toolbar = GuiBox((0, 0), (TOOLBAR_WIDTH, self.screen_size[1]))
-		self.toolbar.add_subelement(Button((0, 0), (TOOLBAR_WIDTH-20, TOOLBAR_WIDTH-20), events.STANDARD_MODE, "std"))		
+		self.toolbar.add_subelement(Button((0, 0), (TOOLBAR_WIDTH, TOOLBAR_WIDTH), events.STANDARD_MODE, "std"))		
 
 	def frame(self, objects, data):
 		self.window.fill(BLACK)
-		self.toolbar.draw(self.window)
 
 		for object in objects:
 			pygame.draw.circle(self.window, object.color, map(lambda x: int(x), object.pos), int(object.size))
@@ -211,6 +225,9 @@ class Screen():
 		if data['text']:
 			textbox = self.font.render(data['text'], True, WHITE, BLACK)
 			self.window.blit(textbox, (self.screen_size[0] - TEXT_OFFSET[0], self.screen_size[1] - TEXT_OFFSET[1]))
+
+		self.toolbar.check()
+		self.toolbar.draw(self.window)
 
 		pygame.display.flip()
 

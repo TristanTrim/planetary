@@ -4,7 +4,6 @@ from pygame.locals import *
 from math import sqrt
 from random import randint, uniform
 
-
 FRAMERATE_VALUES = [20, 30, 60]
 DEFAULT_FRAMERATE_SETTING = 2
 BASE_SPAWN_RATE = FRAMERATE_VALUES[DEFAULT_FRAMERATE_SETTING]
@@ -155,6 +154,8 @@ class InputHandler():
 		for event in events:
 			if event.type == MOUSEBUTTONDOWN:
 				if event.button == 1:
+					if screen.active_gui_element:
+						screen.active_gui_element.click()
 					found = False
 					for object in major_objects:
 						if distance(object) < object.size:
@@ -226,6 +227,12 @@ class InputHandler():
 				global screen_size
 				screen_size = event.size
 				Screen.set_size(event.size)
+			elif event.type == USEREVENT:
+				print event.event
+				if event.event == screen.events.BUTTON_ACTIVE:
+					screen.active_gui_element = event.source
+				elif event.event == screen.events.BUTTON_INACTIVE:
+					screen.active_gui_element = None
 			elif event.type == QUIT:
 				exit()
 
