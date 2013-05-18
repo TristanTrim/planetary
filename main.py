@@ -1,6 +1,9 @@
 import screen
+from screen import events as screen_events
+from screen import states as screen_states
 from pygame.time import Clock
 from pygame.locals import *
+from pygame.event import Event
 from math import sqrt
 from random import randint, uniform
 
@@ -135,7 +138,7 @@ class InputHandler():
 		self.mouse_pos = (0, 0)
 		self.mouse_initial_pos = (0, 0)
 		self.mouse_holding = False
-		self.mass_selection = 0
+		self.mass_selection = 6
 		self.display_data = {'holding': False, 'init_pos': (0, 0), 'pos': (0, 0), 'size': 0}
 		self.next_color = (randint(0, 255), randint(0, 255), randint(0, 255))
 		self.repulsor_mode = False
@@ -145,96 +148,85 @@ class InputHandler():
 
 	def handle_input(self, Screen):
 		def distance(object):
-			return sqrt( (self.mouse_pos[0] - object.pos[0])**2 + (self.mouse_pos[1] - object.pos[1]) **2)
+			return sqrt((self.mouse_pos[0] - object.pos[0])**2 + (self.mouse_pos[1] - object.pos[1]) **2)
 
 		events = Screen.get_events()
 		self.mouse_pos = Screen.get_mouse_pos()
 		global major_objects, minor_objects, settings
 
+
 		for event in events:
 			if event.type == MOUSEBUTTONDOWN:
 				if event.button == 1:
-					if screen.active_gui_element:
-						screen.active_gui_element.click()
-					found = False
-					for object in major_objects:
-						if distance(object) < object.size:
-							object.vel = [0, 0]
-							found = True
-					if not found:
-						if self.manual_spawner:
-							self.add_spawner()
-						else:
-							self.mouse_initial_pos = self.mouse_pos
-							self.mouse_holding = True
-
+					if Screen.active_gui_element:
+						Screen.active_gui_element.click()
+						Screen.post(Event(USEREVENT, {'event': screen_events.BUTTON_CLICK, 'source': Screen.active_gui_element}))
+					elif Screen.state == screen_states.STANDARD:
+						for object in major_objects:
+							if distance(object) < object.size:
+								object.vel = [0, 0]
+					elif Screen.state == screen_states.SPAWN_OBJECT:
+						self.mouse_holding = True
+						self.mouse_initial_pos = self.mouse_pos
+					elif Screen.state == screen_states.SPAWN_PARTICLE:
+						self.mouse_holding = True
+						self.manual_spawner = Spawner(self.mouse_pos, (0, 0), 1)
 				elif event.button == 3:
-					if self.mouse_holding:
-						self.mouse_holding = False
-					else:
+					if Screen.state == screen_states.STANDARD:
 						for object in major_objects:
 							if distance(object) < object.size:
 								object.delete()
-
 						for spawner in spawners:
 							if distance(spawner) < SPAWNER_DELETE_DISTANCE:
 								spawner.delete()
-
-				elif event.button == 4:
-					self.mass_selection = min(self.mass_selection+1, 9)
-				elif event.button == 5:
-					self.mass_selection = max(self.mass_selection-1, 0)
-
-			elif event.type == MOUSEBUTTONUP and event.button == 1 and self.mouse_holding:
-				self.mouse_holding = False
-				if not self.manual_spawner:
-					self.add_object()
-
-			elif event.type == KEYDOWN:
-				if event.key in NUMBER_KEYS:
-					self.mass_selection = NUMBER_KEYS.index(event.key)
-				elif event.key == K_p:
-					settings['paused'] = not settings['paused']
-				elif event.key == K_g:
-					settings['gravity-maj'] = not settings['gravity-maj']
-				elif event.key == K_h:
-					settings['gravity-min'] = not settings['gravity-min']
-				elif event.key == K_f:
-					settings['framerate'] = (settings['framerate'] + 1) % len(FRAMERATE_VALUES)
-					global timefactor
-					timefactor = TIME_RATIO / FRAMERATE_VALUES[settings['framerate']]
-					self.text = "Framerate:" + FRAMERATE_LABELS[settings['framerate']]	
-					self.text_timeout = 0
-				elif event.key == K_z:
-					minor_objects = []
-				elif event.key == K_x:
-					major_objects = []
-				elif event.key == K_s:
-					self.manual_spawner = Spawner(self.mouse_pos, (0, 0), 1) 
-				elif event.key == K_q:
-					found = False
-					for object in major_objects:
-						if distance(object) < object.size:
-							object.mass = -object.mass
-							found = True
-					if not found:
-						self.repulsor_mode = not self.repulsor_mode
-
-			elif event.type == KEYUP:
-				if event.key == K_s:
-					self.manual_spawner = None
+					elif Screen.state == screen_states.SPAWN_OBJECT:
+						self.mouse_holding = False
+					elif Screen.state == screen_states.SPAWN_PARTICLE:
+						if self.mouse_holding:
+							self.mouse_holding = False
+							self.manual_spawner = None
+						else:
+							for spawner in spawners:
+								if distance(spawner) < SPAWNER_DELETE_DISTANCE:
+									spawner.delete()
+						
+			elif event.type == MOUSEBUTTONUP:
+				if event.button == 1:
+					if Screen.state == screen_states.STANDARD:
+						pass
+					elif Screen.state == screen_states.SPAWN_OBJECT:
+						if self.mouse_holding:
+							self.mouse_holding = False
+							self.add_object()
+					elif Screen.state == screen_states.SPAWN_PARTICLE:
+						if self.mouse_holding:
+							self.add_spawner()
+							self.manual_spawner = None
+							self.mouse_holding = False
+				elif event.button == 3:
+					if Screen.state == screen_states.STANDARD:
+						pass
+					elif Screen.state == screen_states.SPAWN_OBJECT:
+						pass
+					elif Screen.state == screen_states.SPAWN_PARTICLE:
+						pass
+			elif event.type == USEREVENT:
+				if event.event == screen_events.STANDARD_MODE:
+					Screen.state = screen_states.STANDARD
+				elif event.event == screen_events.OBJECT_MODE:
+					Screen.state = screen_states.SPAWN_OBJECT
+				elif event.event == screen_events.PARTICLE_MODE:
+					Screen.state = screen_states.SPAWN_PARTICLE
+				elif event.event == screen_events.BUTTON_INACTIVE:
+					Screen.active_gui_element = None
+				elif event.event == screen_events.BUTTON_ACTIVE:
+					Screen.active_gui_element = event.source
+			elif event.type == QUIT:
+				exit()
 			elif event.type == VIDEORESIZE:
 				global screen_size
 				screen_size = event.size
 				Screen.set_size(event.size)
-			elif event.type == USEREVENT:
-				print event.event
-				if event.event == screen.events.BUTTON_ACTIVE:
-					screen.active_gui_element = event.source
-				elif event.event == screen.events.BUTTON_INACTIVE:
-					screen.active_gui_element = None
-			elif event.type == QUIT:
-				exit()
 
 		if self.manual_spawner:
 			if Screen.get_mods() & KMOD_SHIFT:

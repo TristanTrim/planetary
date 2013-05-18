@@ -18,9 +18,17 @@ TOOLBAR_WIDTH = 100
 
 class events():
 	STANDARD_MODE = 1
-	BUTTON_ACTIVE = 2
-	BUTTON_INACTIVE = 3
-	BUTTON_CLICK = 4
+	OBJECT_MODE = 2
+	PARTICLE_MODE = 3
+	
+	BUTTON_ACTIVE = 10
+	BUTTON_INACTIVE = 11
+	BUTTON_CLICK = 12
+
+class states():
+	STANDARD = 1
+	SPAWN_OBJECT = 2
+	SPAWN_PARTICLE = 3
 
 class GuiBox():
 	def __init__(self, pos, size, border_color=WHITE, color=BLACK):
@@ -108,10 +116,22 @@ class Button(GuiBox):
 		text_surface = self.font.render(self.text, True, draw_color, background_color)
 			
 		surface.blit(text_surface, (surface.get_size()[0]/2 - text_surface.get_size()[0]/2, surface.get_size()[1]/2 - text_surface.get_size()[1]/2))
-		pygame.image.save(surface, "a.png")
 
 		target.blit(surface, self.pos)
 
+class NumericButton(Button):
+	def __init__(self, pos, size, event_down, content, numtext, state_count=0, border_color=WHITE, color=BLACK, font_size=BUTTON_FONT_SIZE):
+		self.pos = pos
+		self.size = size
+		self.border_color = border_color
+		self.fill_color = color
+		self.text = content #fixme
+		self.numtext = numtext
+		self.active = False
+                self.font = pygame.font.Font(pygame.font.match_font(pygame.font.get_default_font()), font_size)
+		self.subelements = []
+
+		
 class Popup(GuiBox):
 	def __init__(self, text, option_text, options, anchor, offset, border_color=WHITE, text_color=WHITE, grey_color=GREY, background_color=BLACK, font_size=POPUP_FONT_SIZE, spacing = POPUP_SPACING):
 		self.text = text
@@ -174,9 +194,13 @@ class Screen():
                 self.font = pygame.font.Font(pygame.font.match_font(pygame.font.get_default_font()), FONT_SIZE)
 		pygame.display.flip()
 
+		self.state = states.STANDARD
 		self.active_gui_element = None
 		self.toolbar = GuiBox((0, 0), (TOOLBAR_WIDTH, self.screen_size[1]))
-		self.toolbar.add_subelement(Button((0, 0), (TOOLBAR_WIDTH, TOOLBAR_WIDTH), events.STANDARD_MODE, "std"))		
+		self.toolbar.add_subelement(Button((0, 0), (TOOLBAR_WIDTH, TOOLBAR_WIDTH), events.STANDARD_MODE, "std"))
+		self.toolbar.add_subelement(Button((0, TOOLBAR_WIDTH), (TOOLBAR_WIDTH, TOOLBAR_WIDTH), events.OBJECT_MODE, "obj"))
+		self.toolbar.add_subelement(Button((0, 2*TOOLBAR_WIDTH), (TOOLBAR_WIDTH, TOOLBAR_WIDTH), events.PARTICLE_MODE, "par"))
+		
 
 	def frame(self, objects, data):
 		self.window.fill(BLACK)
@@ -240,3 +264,5 @@ class Screen():
 		return pygame.mouse.get_pos()
 	def get_mods(self):
 		return pygame.key.get_mods()
+	def post(self, event):
+		pygame.event.post(event)
