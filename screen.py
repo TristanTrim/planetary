@@ -24,6 +24,7 @@ class events():
 	BUTTON_ACTIVE = 10
 	BUTTON_INACTIVE = 11
 	BUTTON_CLICK = 12
+	BUTTON_MOUSEWHEEL = 13
 
 class states():
 	STANDARD = 1
@@ -120,18 +121,44 @@ class Button(GuiBox):
 		target.blit(surface, self.pos)
 
 class NumericButton(Button):
-	def __init__(self, pos, size, event_down, content, numtext, state_count=0, border_color=WHITE, color=BLACK, font_size=BUTTON_FONT_SIZE):
+	def __init__(self, pos, size, event_down, content, numtext, state_count=0, toggleable=False, border_color=WHITE, color=BLACK, font_size=BUTTON_FONT_SIZE):
 		self.pos = pos
 		self.size = size
 		self.border_color = border_color
 		self.fill_color = color
+		self.event_down = event_down
+		self.toggleable = toggleable
 		self.text = content #fixme
-		self.numtext = numtext
 		self.active = False
                 self.font = pygame.font.Font(pygame.font.match_font(pygame.font.get_default_font()), font_size)
 		self.subelements = []
+		self.numtext = numtext
+		self.state_count = state_count
+		self.state = 0
 
-		
+	def draw(self, target):
+		surface = pygame.Surface(self.size)
+		for element in self.subelements:
+			element.draw(surface)
+
+		draw_color = self.border_color if not self.active else self.fill_color
+		background_color = self.fill_color if not self.active else self.border_color
+
+		if background_color:
+			surface.fill(background_color)
+		self.draw_border(surface, draw_color)
+		text_surface = self.font.render(self.text, True, draw_color, background_color)
+
+		number_surface = self.font.render(self.numtext+str(self.state), True, draw_color, background_color)		
+		surface.blit(text_surface, (surface.get_size()[0]/2 - text_surface.get_size()[0]/2, surface.get_size()[1]/2 - text_surface.get_size()[1]/2))
+		surface.blit(number_surface, (surface.get_size()[0]/2 - number_surface.get_size()[0]/2, surface.get_size()[1]*3/4 - number_surface.get_size()[1]/2))
+
+		target.blit(surface, self.pos)	
+	def scroll(self, direction):
+		if direction:
+			self.state = min(self.state + 1, self.state_count)
+		else:
+			self.state = max(self.state - 1, 0) 
 class Popup(GuiBox):
 	def __init__(self, text, option_text, options, anchor, offset, border_color=WHITE, text_color=WHITE, grey_color=GREY, background_color=BLACK, font_size=POPUP_FONT_SIZE, spacing = POPUP_SPACING):
 		self.text = text
@@ -198,7 +225,7 @@ class Screen():
 		self.active_gui_element = None
 		self.toolbar = GuiBox((0, 0), (TOOLBAR_WIDTH, self.screen_size[1]))
 		self.toolbar.add_subelement(Button((0, 0), (TOOLBAR_WIDTH, TOOLBAR_WIDTH), events.STANDARD_MODE, "std"))
-		self.toolbar.add_subelement(Button((0, TOOLBAR_WIDTH), (TOOLBAR_WIDTH, TOOLBAR_WIDTH), events.OBJECT_MODE, "obj"))
+		self.toolbar.add_subelement(NumericButton((0, TOOLBAR_WIDTH), (TOOLBAR_WIDTH, TOOLBAR_WIDTH), events.OBJECT_MODE, "obj", "size: ", 9))
 		self.toolbar.add_subelement(Button((0, 2*TOOLBAR_WIDTH), (TOOLBAR_WIDTH, TOOLBAR_WIDTH), events.PARTICLE_MODE, "par"))
 		
 

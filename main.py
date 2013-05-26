@@ -1,6 +1,7 @@
 import screen
 from screen import events as screen_events
 from screen import states as screen_states
+from screen import TOOLBAR_WIDTH as SCREEN_TOOLBAR_WIDTH
 from pygame.time import Clock
 from pygame.locals import *
 from pygame.event import Event
@@ -154,14 +155,25 @@ class InputHandler():
 		self.mouse_pos = Screen.get_mouse_pos()
 		global major_objects, minor_objects, settings
 
+		mouse_in_toolbar = self.mouse_pos[0] < SCREEN_TOOLBAR_WIDTH
 
 		for event in events:
-			if event.type == MOUSEBUTTONDOWN:
+			if event.type == MOUSEBUTTONDOWN and Screen.active_gui_element:
 				if event.button == 1:
-					if Screen.active_gui_element:
-						Screen.active_gui_element.click()
-						Screen.post(Event(USEREVENT, {'event': screen_events.BUTTON_CLICK, 'source': Screen.active_gui_element}))
-					elif Screen.state == screen_states.STANDARD:
+					Screen.active_gui_element.click()	
+					Screen.post(Event(USEREVENT, {'event': screen_events.BUTTON_CLICK, 'source': Screen.active_gui_element}))
+				elif event.button == 4 and isinstance(Screen.active_gui_element, screen.NumericButton):
+					Screen.active_gui_element.scroll(True)
+					Screen.post(Event(USEREVENT, {'event': screen_events.BUTTON_MOUSEWHEEL, 'source': Screen.active_gui_element}))
+				elif event.button == 5 and isinstance(Screen.active_gui_element, screen.NumericButton):
+					Screen.active_gui_element.scroll(False)
+					Screen.post(Event(USEREVENT, {'event': screen_events.BUTTON_MOUSEWHEEL, 'source': Screen.active_gui_element}))
+
+			elif event.type == MOUSEBUTTONDOWN:
+				if mouse_in_toolbar:
+					pass	
+				elif event.button == 1:
+					if Screen.state == screen_states.STANDARD:
 						for object in major_objects:
 							if distance(object) < object.size:
 								object.vel = [0, 0]
@@ -221,6 +233,9 @@ class InputHandler():
 					Screen.active_gui_element = None
 				elif event.event == screen_events.BUTTON_ACTIVE:
 					Screen.active_gui_element = event.source
+				elif event.event == screen_events.BUTTON_MOUSEWHEEL:
+					self.mass_selection = event.source.state
+				
 			elif event.type == QUIT:
 				exit()
 			elif event.type == VIDEORESIZE:
