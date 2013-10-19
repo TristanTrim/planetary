@@ -9,6 +9,8 @@ WHITE = (255, 255, 255)
 ARROW_TIP_SIZE = 10
 REP_MARKER_SIZE = 0.2
 FONT_SIZE = 25
+import itertools
+
 
 ##get us the project path, so we can open images easier.
 import os
@@ -20,9 +22,13 @@ PROJECT_PATH = os.path.realpath(os.path.dirname(__file__))
 wikiship = {};
 for frame in range(0, 6):
     wikiship[frame]= pygame.image.load(PROJECT_PATH+"/images/wikiship/"+str(frame)+".gif") 
+wikiship["fps"]=1
+wikiship["frames"]=5
+
+def animtimer(fps,frames):
+  animtimer.counter += 1
 
 
-print(wikiship)
 
 
 class Screen():
@@ -36,6 +42,7 @@ class Screen():
                 self.font = pygame.font.Font(pygame.font.match_font(pygame.font.get_default_font()), FONT_SIZE)
 		pygame.display.flip()
 
+
 	def frame(self, objects, data):
 		self.window.fill(BLACK)
 
@@ -44,11 +51,10 @@ class Screen():
                         pos=[0,0]
                         pos[0]=object.pos[0]-16
                         pos[1]=object.pos[1]-16
-                     
-                        self.window.blit(wikiship[4], pos)
-
+                        print ( frame)
+                        foo()
 #                       if object.isuser() == True:
-                                
+
 		
 		if data['holding']:
 			pygame.mouse.set_visible(False)
