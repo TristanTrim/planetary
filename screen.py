@@ -10,6 +10,21 @@ ARROW_TIP_SIZE = 10
 REP_MARKER_SIZE = 0.2
 FONT_SIZE = 25
 
+##get us the project path, so we can open images easier.
+import os
+PROJECT_PATH = os.path.realpath(os.path.dirname(__file__))
+
+
+##standard ships
+
+wikiship = {};
+for frame in range(0, 6):
+    wikiship[frame]= pygame.image.load(PROJECT_PATH+"/images/wikiship/"+str(frame)+".gif") 
+
+
+print(wikiship)
+
+
 class Screen():
 	def __init__(self, sizes):
 		pygame.init()
@@ -26,8 +41,14 @@ class Screen():
 
 		for object in objects:
 			pygame.draw.circle(self.window, object.color, map(lambda x: int(x), object.pos), int(object.size))
-			if object.mass < 0:
-				pygame.draw.circle(self.window, WHITE, map(lambda x: int(x), object.pos), int(object.size * REP_MARKER_SIZE))
+                        pos=[0,0]
+                        pos[0]=object.pos[0]-16
+                        pos[1]=object.pos[1]-16
+                     
+                        self.window.blit(wikiship[4], pos)
+
+#                       if object.isuser() == True:
+                                
 		
 		if data['holding']:
 			pygame.mouse.set_visible(False)
