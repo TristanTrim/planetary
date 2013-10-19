@@ -26,7 +26,6 @@ SWARM_COUNT = 10
 SPAWNER_DELETE_DISTANCE = 25
 TEXT_TIMEOUT = 4
 
-
 class Spawner():
 	def __init__(self, position, obj_velocity, intensity):
 		self.pos = position
@@ -127,9 +126,15 @@ class Object():
 	def update(self):		
 		self.vel[0] += self.gravity[0] * timefactor
 		self.vel[1] += self.gravity[1] * timefactor
+
+		if self in user_objects:
+			self.vel[0] += InputHandler.user_left_right * timefactor
+			self.vel[1] += InputHandler.user_up_down * timefactor
+			print("vel is " + str(InputHandler.user_left_right) +", "+str(InputHandler.user_up_down))
 		
 		self.pos[0] += self.vel[0] * timefactor
 		self.pos[1] += self.vel[1] * timefactor
+
 
 class InputHandler():
 	def __init__(self):
@@ -143,6 +148,9 @@ class InputHandler():
 		self.text = ''
 		self.text_timeout = 0
 		self.manual_spawner = None
+		self.user_left_right = 0
+		self.user_up_down = 0
+
 
 	def handle_input(self, Screen):
 		def distance(object):
@@ -218,10 +226,36 @@ class InputHandler():
 							found = True
 					if not found:
 						self.repulsor_mode = not self.repulsor_mode
+				elif event.key == K_u:
+					self.add_object(isUser=1)
+				elif event.key == K_UP:
+					self.user_up_down = -100
+					print("up")
+				elif event.key == K_DOWN:
+					self.user_up_down = 100
+					print("down")
+				elif event.key == K_LEFT:
+					self.user_left_right = -100
+					print("left")
+				elif event.key == K_RIGHT:
+					self.user_left_right = 100
+					print("right")
 
 			elif event.type == KEYUP:
 				if event.key == K_s:
 					self.manual_spawner = None
+				elif event.key == K_UP:
+					self.user_up_down = 00
+					print("up")
+				elif event.key == K_DOWN:
+					self.user_up_down = 00
+					print("down")
+				elif event.key == K_LEFT:
+					self.user_left_right = 00
+					print("left")
+				elif event.key == K_RIGHT:
+					self.user_left_right = 00
+					print("right")
 			elif event.type == VIDEORESIZE:
 				global screen_size
 				screen_size = event.size
@@ -247,7 +281,7 @@ class InputHandler():
 		self.display_data = {'holding': self.mouse_holding and not self.manual_spawner, 'init_pos': self.mouse_initial_pos, 'pos': self.mouse_pos, 'size': SIZE_VALUES[self.mass_selection], 'color': self.next_color, 'repulsor_mode': self.repulsor_mode, 'text': self.text}
 		
 
-	def add_object(self):
+	def add_object(self, isUser=0):
 		velocity = (self.mouse_pos[0] - self.mouse_initial_pos[0], self.mouse_pos[1] - self.mouse_initial_pos[1])
 
 		if self.mass_selection == 0:
@@ -262,7 +296,10 @@ class InputHandler():
 
 		new_object = Object(self.mouse_initial_pos, velocity, color, mass)
 
-		if self.mass_selection == 0:
+		if isUser == 1:
+			global user_objects
+			user_objects.append(new_object)
+		elif self.mass_selection == 0:
 			global minor_objects
 			minor_objects.append(new_object)
 		else:
@@ -282,10 +319,16 @@ Clock = Clock()
 InputHandler = InputHandler()
 major_objects = []
 minor_objects = []
+user_objects = []
 spawners = []
+
 
 while True:
 	if not settings['paused']:
+		for object in user_objects:
+			object.tick(major_objects)
+		for object in user_objects:
+			object.update()
 		for object in major_objects:
 			object.tick(major_objects)
 		for object in major_objects:
@@ -295,5 +338,5 @@ while True:
 		for spawner in spawners:
 			spawner.spawn()
 	InputHandler.handle_input(Screen)	
-	Screen.frame(major_objects+minor_objects, InputHandler.display_data)
+	Screen.frame(major_objects+minor_objects+user_objects, InputHandler.display_data)
 	Clock.tick(FRAMERATE_VALUES[settings['framerate']])	
