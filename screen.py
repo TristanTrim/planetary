@@ -21,7 +21,7 @@ PROJECT_PATH = os.path.realpath(os.path.dirname(__file__))
 
 wikiship = {};
 for frame in range(0, 6):
-    wikiship[frame]= pygame.image.load(PROJECT_PATH+"/images/wikiship/"+str(frame)+".gif") 
+    wikiship[frame]= pygame.image.load(PROJECT_PATH+"/images/gifs/WIKISHIP1GIF/"+str(frame)+".gif") 
 wikiship["fps"]=1
 wikiship["frames"]=5
 
@@ -43,17 +43,17 @@ class Screen():
 		pygame.display.flip()
 
 
-	def frame(self, objects, data):
+	def frame(self, objects, data,):
 		self.window.fill(BLACK)
 
 		for object in objects:
-			pygame.draw.circle(self.window, object.color, map(lambda x: int(x), object.pos), int(object.size))
                         pos=[0,0]
                         pos[0]=object.pos[0]-16
                         pos[1]=object.pos[1]-16
-                        print ( frame)
-#                       if object.isuser() == True:
-                        self.window.blit(wikiship[4], pos)
+                        if object.isUser == True:
+                            self.window.blit(wikiship[4], pos)
+                        else:
+                            pygame.draw.circle(self.window, object.color, map(lambda x: int(x), object.pos), int(object.size))
 
 		
 		if data['holding']:
