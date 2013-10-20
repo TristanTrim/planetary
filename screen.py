@@ -50,6 +50,8 @@ class Screen():
 		self.window.fill(BLACK)
 		for object in objects:
                         
+			print(object.kind)
+
                         pos=[0,0]
                         pos[0]=object.pos[0]-(center[0])+(self.screen_size[1]/2)
                         pos[1]=object.pos[1]-(center[1])+(self.screen_size[1]/2)
