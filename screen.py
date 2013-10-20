@@ -52,8 +52,8 @@ class Screen():
                         pos[0]=object.pos[0]-16
                         pos[1]=object.pos[1]-16
                         print ( frame)
-                        foo()
 #                       if object.isuser() == True:
+                        self.window.blit(wikiship[4], pos)
 
 		
 		if data['holding']:
