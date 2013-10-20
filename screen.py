@@ -43,7 +43,7 @@ class Screen():
 		pygame.display.flip()
 
 
-	def frame(self, objects, data,):
+	def frame(self, objects, data, center):
 		self.window.fill(BLACK)
 
 		for object in objects:
