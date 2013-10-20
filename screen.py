@@ -16,15 +16,18 @@ import itertools
 import os
 PROJECT_PATH = os.path.realpath(os.path.dirname(__file__))
 
-print(os.listdir(PROJECT_PATH+"/images/gifs/"))
+folders=(os.listdir(PROJECT_PATH+"/images/gifs/"))
 
-##standard ships
-
-wikiship = {};
-for frame in range(0, 6):
-    wikiship[frame]= pygame.image.load(PROJECT_PATH+"/images/gifs/WIKISHIP1GIF/"+str(frame)+".gif") 
-wikiship["fps"]=1
-wikiship["frames"]=5
+##Loads all the images in images/gifs
+sprites= {};
+offset={};
+for i in folders:
+  files =  os.listdir(PROJECT_PATH+"/images/gifs/"+i+"/")
+  sprites[i]=[]
+  offset[i]=(0,0)
+  for frame in files:
+      sprites[i].append(pygame.image.load(PROJECT_PATH+"/images/gifs/"+i+"/"+str(frame)))
+  offset[i]=sprites[i][0].get_size()
 
 
 
@@ -49,12 +52,21 @@ class Screen():
                         pos=[0,0]
                         pos[0]=object.pos[0]-(center[0])+(self.screen_size[1]/2)
                         pos[1]=object.pos[1]-(center[1])+(self.screen_size[1]/2)
-                        if object.isUser == True:
+
+                        if object.kind == "generic":
+                            pygame.draw.circle(self.window, object.color, map(lambda x: int(x), pos), int(object.size))
+                        if object.kind == "user":
                             pos[0]-16
                             pos[1]-16
-                            self.window.blit(wikiship[4], pos)
+                            self.window.blit(sprites["WIKISHIP1GIF"][4], pos)
                         else:
                             pygame.draw.circle(self.window, object.color, map(lambda x: int(x), pos), int(object.size))
+#                        if object.isUser == True:
+#                            pos[0]-16
+#                            pos[1]-16
+#                            self.window.blit(sprites["WIKISHIP1GIF"][4], pos)
+#                        else:
+#                            pygame.draw.circle(self.window, object.color, map(lambda x: int(x), pos), int(object.size))
 
 		
 		if data['holding']:
