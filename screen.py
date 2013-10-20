@@ -44,13 +44,14 @@ class Screen():
 
 	def frame(self, objects, data, center):
 		self.window.fill(BLACK)
-                print(str((center[0]-(self.screen_size[0]/2),self.screen_size[1]/2))+"------------------------")
 		for object in objects:
                         
                         pos=[0,0]
-                        pos[0]=object.pos[0]-16-(center[0])+(self.screen_size[1]/2)
-                        pos[1]=object.pos[1]-16-(center[1])+(self.screen_size[1]/2)
+                        pos[0]=object.pos[0]-(center[0])+(self.screen_size[1]/2)
+                        pos[1]=object.pos[1]-(center[1])+(self.screen_size[1]/2)
                         if object.isUser == True:
+                            pos[0]-16
+                            pos[1]-16
                             self.window.blit(wikiship[4], pos)
                         else:
                             pygame.draw.circle(self.window, object.color, map(lambda x: int(x), pos), int(object.size))
