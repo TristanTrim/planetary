@@ -189,11 +189,11 @@ class Spawner(Object):
 		x = self.o_vel[0]
 		y = self.o_vel[1]
 		#theta = (180+(degrees(atan2(x,y))))
-		print(x, y)
+		#print(x, y)
 		self.o_vel[0] = cos(self.spinv)*100
 		self.o_vel[1] = sin(self.spinv)*100 
 		self.spinv+=(.01+90)
-		print(self.o_vel[0],self.o_vel[1])
+		#print(self.o_vel[0],self.o_vel[1])
 
 
 class GravityCrosshairs(Object):
@@ -218,7 +218,7 @@ class GravityCrosshairs(Object):
 		y = self.user.pos[1] + cos(self.angle) * 20
 		self.pos = [x,y]
 		self.angle % pi
-		print("crosshair angle is " + str(self.angle))
+		#print("crosshair angle is " + str(self.angle))
 
 		self.angle += self.rotation_amount
 		
@@ -252,8 +252,8 @@ class UserObject(Object):
 		self.crosshairs.rotation_amount =-.1
 		self.crosshairs.LockToUser()
 
-	def space(self):
-		print("tractor beam!")
+#	def space(self):
+		#print("tractor beam!")
 
 
 ########	OLD STEARING SCEME. MAY STILL HAVE USE.		###
@@ -269,14 +269,14 @@ class UserObject(Object):
 ########        self.acl[0] = USER_ACCELERATION_SPEED * timefactor
 
 	def release_up(self): 
-		print("user object says up!")
-	        self.acl[1] = 0#USER_ACCELERATION_SPEED * timefactor
+		#print("user object says up!")
+		self.acl[1] = 0#USER_ACCELERATION_SPEED * timefactor
 	def release_down(self):
-	        self.acl[1] = 0#USER_ACCELERATION_SPEED * timefactor
+		self.acl[1] = 0#USER_ACCELERATION_SPEED * timefactor
 	def release_left(self):
-	        self.crosshairs.rotation_amount = 0#USER_ACCELERATION_SPEED * timefactor
+		self.crosshairs.rotation_amount = 0#USER_ACCELERATION_SPEED * timefactor
 	def release_right(self):
-	        self.crosshairs.rotation_amount = 0#USER_ACCELERATION_SPEED * timefactor
+		self.crosshairs.rotation_amount = 0#USER_ACCELERATION_SPEED * timefactor
 
 
 #class MassEffect():
@@ -387,19 +387,19 @@ class InputHandler():
 					self.add_object(isUser=1)
 				elif event.key == K_UP:
 					user_objects[0].up()#self.user_up_down = -100
-					print("up")
+					#print("up")
 				elif event.key == K_DOWN:
 					user_objects[0].down()#self.user_up_down = 100
-					print("down")
+					#print("down")
 				elif event.key == K_LEFT:
 					user_objects[0].left()#self.user_left_right = -100
-					print("left")
+					#print("left")
 				elif event.key == K_RIGHT:
 					user_objects[0].right()#self.user_left_right = 100
-					print("right")
+					#print("right")
 				elif event.key == K_SPACE:
 					user_objects[0].space()
-					print("space")
+					#print("space")
 				#elif event.key == K_SPACE:
 				## WARP ##
 				elif event.key == K_w:
@@ -412,16 +412,16 @@ class InputHandler():
 				## kill user keypress ##
 				elif event.key == K_UP:
 					user_objects[0].release_up()#self.user_up_down = -100
-					print("up")
+					#print("up")
 				elif event.key == K_DOWN:
 					user_objects[0].release_down()#self.user_up_down = 100
-					print("down")
+					#print("down")
 				elif event.key == K_LEFT:
 					user_objects[0].release_left()#self.user_left_right = -100
-					print("left")
+					#print("left")
 				elif event.key == K_RIGHT:
 					user_objects[0].release_right()#self.user_left_right = 100
-					print("right")
+					#print("right")
 				## ##
 			elif event.type == VIDEORESIZE:
 				global screen_size
@@ -469,9 +469,9 @@ class InputHandler():
 			new_object.isUser=isUser
 			global user_objects
 			user_objects.append(new_object)
-			print("add user says its a user")
+			#print("add user says its a user")
 		else:
-			new_object = Object(self.mouse_initial_pos, velocity, color, mass, kind = 'astroid')
+			new_object = Object(self.mouse_initial_pos, velocity, color, mass)
 
 			if self.mass_selection == 0:
 				self.kind = 'rock'
@@ -480,6 +480,7 @@ class InputHandler():
 			else:
 				global major_objects
 				major_objects.append(new_object)
+				self.kind = 'astroid'
 
 		new_object.tick(major_objects)
 
@@ -591,7 +592,7 @@ while True:
 			
 		try:
 			ScreenPos = user_objects[0].pos
-			print(ScreenPos)
+			#print(ScreenPos)
 			for object in user_objects:
 				object.tick(major_objects+user_objects)
 				object.calculate_heading()
