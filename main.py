@@ -35,7 +35,7 @@ USER_ACCELERATION_SPEED = 1000
 
 
 class Object():
-	def __init__(self, position, velocity, color=WHITE, mass=0):
+	def __init__(self, position, velocity, kind = 'generic', color=WHITE, mass=0):
 		self.pos = list(position)
 		self.vel = list(velocity)
 		self.acl = [0,0]
@@ -44,6 +44,7 @@ class Object():
 		self.mass = mass 
 		self.size = 0.5 * pow(abs(mass), 1/3.0)	
 		self.isUser = 0
+		self.kind = kind
 		
 	def delete(self):
 		if self.mass:
@@ -109,7 +110,7 @@ class Object():
 				new_color[2] = (self.color[2] * self.mass + object.color[2] * object.mass) / (self.mass + object.mass)
 				new_color = map(lambda x: max(min(255, x), 0), new_color)
 			
-				new_object = Object(self.pos, new_velocity,  new_color, self.mass + object.mass)
+				new_object = Object(self.pos, new_velocity, object.kind, new_color, self.mass + object.mass)
 				object.delete()
 				self.delete()
 				new_object.tick(major_objects)
@@ -150,7 +151,7 @@ class Object():
 
 
 class Spawner(Object):
-	def __init__(self, position, obj_velocity, velocity, intensity, color=WHITE, mass = 0, vel = 0):
+	def __init__(self, position, obj_velocity, velocity, intensity, kind = 'none', color=WHITE, mass = 0, vel = 0):
 		self.pos = list(position)
 		self.vel = list(velocity)
 		self.acl = [0,0]
@@ -180,7 +181,7 @@ class Spawner(Object):
 			velocity[0] += uniform(-SWARM_MAX_VEL, SWARM_MAX_VEL)
 			velocity[1] += uniform(-SWARM_MAX_VEL, SWARM_MAX_VEL)
 
-			object = Object(self.pos, velocity)
+			object = Object(self.pos, velocity, kind = 'rock')
 			minor_objects.append(object)
 			self.spawn_counter -= FRAMERATE_VALUES[settings['framerate']]
 
@@ -196,7 +197,7 @@ class Spawner(Object):
 
 
 class GravityCrosshairs(Object):
-	def __init__(self, user, colour = WHITE, mass = 0):
+	def __init__(self, user, kind = 'generic', colour = WHITE, mass = 0):
 		self.isUser = 0
 		self.pos = [0,0]
 		self.vel = [0,0]
@@ -224,7 +225,7 @@ class GravityCrosshairs(Object):
 
 
 class UserObject(Object):
-	def __init__(self, position, velocity, colour = WHITE, mass = 3000):
+	def __init__(self, position, velocity, kind = 'user', colour = WHITE, mass = 3000):
 		self.isUser = 1	
 		self.pos = list(position)
 		self.vel = list(velocity)
@@ -276,6 +277,14 @@ class UserObject(Object):
 	        self.crosshairs.rotation_amount = 0#USER_ACCELERATION_SPEED * timefactor
 	def release_right(self):
 	        self.crosshairs.rotation_amount = 0#USER_ACCELERATION_SPEED * timefactor
+
+
+#class MassEffect():
+#	def __init__(self, position, strength = 100):
+#		self.pos = position
+	
+	
+
 
 
 
@@ -437,7 +446,9 @@ class InputHandler():
 				self.text_timeout += 1
 
 		self.display_data = {'holding': self.mouse_holding and not self.manual_spawner, 'init_pos': self.mouse_initial_pos, 'pos': self.mouse_pos, 'size': SIZE_VALUES[self.mass_selection], 'color': self.next_color, 'repulsor_mode': self.repulsor_mode, 'text': self.text}
-		
+
+
+###	Looks like I should try to handel adding of all the objects here..		##
 
 	def add_object(self, isUser=0):
 		velocity = (self.mouse_pos[0] - self.mouse_initial_pos[0], self.mouse_pos[1] - self.mouse_initial_pos[1])
@@ -454,15 +465,16 @@ class InputHandler():
 
 
 		if isUser == 1:
-			new_object = UserObject(self.mouse_initial_pos, velocity, color, mass)
+			new_object = UserObject(self.mouse_initial_pos, velocity, color, mass, kind = 'user')
 			new_object.isUser=isUser
 			global user_objects
 			user_objects.append(new_object)
 			print("add user says its a user")
 		else:
-			new_object = Object(self.mouse_initial_pos, velocity, color, mass)
+			new_object = Object(self.mouse_initial_pos, velocity, color, mass, kind = 'astroid')
 
 			if self.mass_selection == 0:
+				self.kind = 'rock'
 				global minor_objects
 				minor_objects.append(new_object)
 			else:
@@ -499,6 +511,7 @@ class InputHandler():
 		spawners = target_plane.spawners
 		current_plane = destination
 		#print(current_plane)
+
 
 
 
@@ -606,6 +619,7 @@ while True:
 
 
 	InputHandler.handle_input(Screen)
+### Some kind of object handeler might be nice for dealing with this...  ##
 	Screen.frame(major_objects+minor_objects+portal_objects+user_objects+crosshair_objects, InputHandler.display_data, ScreenPos)
 	Clock.tick(FRAMERATE_VALUES[settings['framerate']])	
 
