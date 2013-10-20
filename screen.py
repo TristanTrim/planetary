@@ -16,6 +16,7 @@ import itertools
 import os
 PROJECT_PATH = os.path.realpath(os.path.dirname(__file__))
 
+print(os.listdir(PROJECT_PATH+"/images/gifs/"))
 
 ##standard ships
 
@@ -25,8 +26,6 @@ for frame in range(0, 6):
 wikiship["fps"]=1
 wikiship["frames"]=5
 
-def animtimer(fps,frames):
-  animtimer.counter += 1
 
 
 
@@ -45,15 +44,16 @@ class Screen():
 
 	def frame(self, objects, data, center):
 		self.window.fill(BLACK)
-
+                print(str((center[0]-(self.screen_size[0]/2),self.screen_size[1]/2))+"------------------------")
 		for object in objects:
+                        
                         pos=[0,0]
-                        pos[0]=object.pos[0]-16
-                        pos[1]=object.pos[1]-16
+                        pos[0]=object.pos[0]-16-(center[0])+(self.screen_size[1]/2)
+                        pos[1]=object.pos[1]-16-(center[1])+(self.screen_size[1]/2)
                         if object.isUser == True:
                             self.window.blit(wikiship[4], pos)
                         else:
-                            pygame.draw.circle(self.window, object.color, map(lambda x: int(x), object.pos), int(object.size))
+                            pygame.draw.circle(self.window, object.color, map(lambda x: int(x), pos), int(object.size))
 
 		
 		if data['holding']:
