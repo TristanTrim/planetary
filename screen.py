@@ -47,6 +47,8 @@ class Screen():
                 print(str((center[0]-(self.screen_size[0]/2),self.screen_size[1]/2))+"------------------------")
 		for object in objects:
                         
+			print(object.kind)
+
                         pos=[0,0]
                         pos[0]=object.pos[0]-16-(center[0])+(self.screen_size[1]/2)
                         pos[1]=object.pos[1]-16-(center[1])+(self.screen_size[1]/2)

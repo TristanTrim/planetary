@@ -120,6 +120,8 @@ class Object():
 			if (settings['gravity-min'] and self.mass == 0) or (settings['gravity-maj'] and self.mass):
 				self.gravity[0] -= (G * object.mass * (self.pos[0] - object.pos[0])) / distance**3
 				self.gravity[1] -= (G * object.mass * (self.pos[1] - object.pos[1])) / distance**3
+				print("gravity for "+str(object)+" is " + str(self.gravity))
+				
 			
 		#if the object is a minor object (i.e. has no gravitational field), it is safe to update it immediately: 
 		if self.mass == 0:
@@ -164,8 +166,9 @@ class Spawner(Object):
 		self.o_vel = obj_velocity
 		self.intensity = intensity
 		self.spawn_counter = 0
-		self.spinv=0
+		self.spinv=0#
 		
+		self.kind = kind
 
 
 	def delete(self):
@@ -209,6 +212,7 @@ class GravityCrosshairs(Object):
 		self.angle = 0
 		self.user = user
 		self.rotation_amount = 0
+		self.kind = kind
 
 		global minor_objects
 		crosshair_objects.append(self)
@@ -234,6 +238,7 @@ class UserObject(Object):
 		self.mass = mass 
 		self.size = 0.5 * pow(abs(mass), 1/3.0)	
 		self.color = WHITE
+		self.kind = kind
 
 		self.crosshairs = GravityCrosshairs(self)
 
@@ -279,9 +284,17 @@ class UserObject(Object):
 		self.crosshairs.rotation_amount = 0#USER_ACCELERATION_SPEED * timefactor
 
 
-#class MassEffect():
-#	def __init__(self, position, strength = 100):
-#		self.pos = position
+#class MassEffect(self):
+########def __init__(self, position, strength = 100):
+########	self.pos = position
+########	self.mass = 100*strength
+########	global major_objects
+########	majour_objects.append(self)
+
+########def delete(self):
+########	global major_objects
+########	if self in major_objects:
+########		major_objects.remove(self)
 	
 	
 
@@ -400,7 +413,8 @@ class InputHandler():
 				elif event.key == K_SPACE:
 					user_objects[0].space()
 					#print("space")
-				#elif event.key == K_SPACE:
+				elif event.key == K_SPACE:
+					add_mass_effect()
 				## WARP ##
 				elif event.key == K_w:
 					self.warp("meh")
@@ -449,6 +463,21 @@ class InputHandler():
 
 
 ###	Looks like I should try to handel adding of all the objects here..		##
+
+	# lets give it a try #
+	def add_mass_effect(self):
+		if IsUser:
+			x,y = ScreenPos
+			x2,y2 = user_objects[0].crosshairs.pos
+
+			position = []
+			position.append(x+2*(x-x2))
+			position.append(y+2*(y-y2))
+
+			new_mass_effect = MassEffect(position)
+			
+		
+
 
 	def add_object(self, isUser=0):
 		velocity = (self.mouse_pos[0] - self.mouse_initial_pos[0], self.mouse_pos[1] - self.mouse_initial_pos[1])
@@ -527,13 +556,14 @@ class plane_of_existance():
 
 
 class portal():
-	def __init__(self, position, destination):
+	def __init__(self, position, destination, kind = 'portal'):
 		self.mass = 1
 		self.isUser = 0
 		self.pos = position
 		self.color = WHITE
 		self.size = 50
 		self.destination = destination
+		self.kind = kind
 
 	def traverse(self, traveler):
 		InputHandler.warp(self.destination, traveler)
@@ -553,6 +583,7 @@ cube_of_existance = []
 
 major_objects = []
 minor_objects = []
+mass_effect_objects = []
 spawners = []
 
 portal_objects = []
