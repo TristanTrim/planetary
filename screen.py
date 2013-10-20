@@ -22,13 +22,16 @@ folders=(os.listdir(PROJECT_PATH+"/images/gifs/"))
 sprites= {};
 offset={};
 frames={};
+
 for i in folders:
   files =  os.listdir(PROJECT_PATH+"/images/gifs/"+i+"/")
   sprites[i]=[]
   offset[i]=(0,0)
   for frame in files:
-      sprites[i].append(pygame.image.load(PROJECT_PATH+"/images/gifs/"+i+"/"+str(frame)))
-  offset[i]=sprites[i][0].get_size()
+      tmp=pygame.image.load(PROJECT_PATH+"/images/gifs/"+i+"/"+str(frame))
+      sprites[i].append(tmp.convert_alpha())
+
+#  offset[i]=sprites[i][0].get_size()
 
 
 
@@ -50,8 +53,6 @@ class Screen():
 		self.window.fill(BLACK)
 		for object in objects:
                         
-			print(object.kind)
-
                         pos=[0,0]
                         pos[0]=object.pos[0]-(center[0])+(self.screen_size[1]/2)
                         pos[1]=object.pos[1]-(center[1])+(self.screen_size[1]/2)
@@ -61,7 +62,8 @@ class Screen():
                             pygame.draw.circle(self.window, object.color, map(lambda x: int(x), pos), int(object.size))
                             pos[0]-=(offset["WIKISHIP1GIF"][0]/2)
                             pos[1]-=(offset["WIKISHIP1GIF"][1]/2)
-                            self.window.blit(sprites["WIKISHIP1GIF"][4], pos)
+                            sprite=pygame.transform.rotate(sprites["WIKISHIP1GIF"][4],object.heading)
+                            self.window.blit(sprite, pos)
                         else:
                             pygame.draw.circle(self.window, object.color, map(lambda x: int(x), pos), int(object.size))
 #                        if object.isUser == True:
