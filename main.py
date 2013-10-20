@@ -169,7 +169,7 @@ class Spawner(Object):
 
 	def delete(self):
 		global spawners, minor_objects
-		spawners.remove(self)
+		#spawners.remove(self)
 		minor_objects.remove(self)
 
 	def spawn(self):
@@ -527,12 +527,13 @@ class portal():
 
 
 
-
+IsUser = True
 
 Screen = screen.Screen(SIZE_VALUES)
 Clock = Clock()
 InputHandler = InputHandler()
 
+ScreenPos = [0,0]
 current_plane = 0
 cube_of_existance = []
 
@@ -575,9 +576,15 @@ while True:
 		for object in crosshair_objects:
 			object.LockToUser()
 			
-		for object in user_objects:
-			object.tick(major_objects+user_objects)
-			object.calculate_heading()
+		try:
+			ScreenPos = user_objects[0].pos
+			print(ScreenPos)
+			for object in user_objects:
+				object.tick(major_objects+user_objects)
+				object.calculate_heading()
+		except IndexError:
+			IsUser = False
+
 		for object in major_objects:
 			object.tick(major_objects+user_objects)
 			object.calculate_heading()
@@ -596,6 +603,11 @@ while True:
 			object.calculate_heading()
 		for spawner in spawners:
 			spawner.spawn()
+
+
 	InputHandler.handle_input(Screen)
-	Screen.frame(major_objects+minor_objects+portal_objects+user_objects+crosshair_objects, InputHandler.display_data)
+	Screen.frame(major_objects+minor_objects+portal_objects+user_objects+crosshair_objects, InputHandler.display_data, ScreenPos)
 	Clock.tick(FRAMERATE_VALUES[settings['framerate']])	
+
+
+
