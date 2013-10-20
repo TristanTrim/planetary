@@ -125,13 +125,18 @@ class Object():
 			self.update()	
 
 	def update(self):		
+		
+
+		if self.isUser == 1:
+		########self.vel[0] += InputHandler.user_left_right * timefactor
+		########self.vel[1] += InputHandler.user_up_down * timefactor
+		########print("vel is " + str(InputHandler.user_left_right) +", "+str(InputHandler.user_up_down))
+			self.acl = [self.pos[0]-self.crosshairs.pos[0], self.pos[1]-self.crosshairs.pos[1]]
+
 		self.vel[0] += (self.gravity[0] + self.acl[0]) * timefactor
 		self.vel[1] += (self.gravity[1] + self.acl[1]) * timefactor
+			
 
-	########if self.isUser == 1:
-	########	self.vel[0] += InputHandler.user_left_right * timefactor
-	########	self.vel[1] += InputHandler.user_up_down * timefactor
-	########	print("vel is " + str(InputHandler.user_left_right) +", "+str(InputHandler.user_up_down))
 		
 		self.pos[0] += self.vel[0] * timefactor
 		self.pos[1] += self.vel[1] * timefactor
@@ -202,16 +207,20 @@ class GravityCrosshairs(Object):
 		self.color = WHITE
 		self.angle = 0
 		self.user = user
+		self.rotation_amount = 0
 
 		global minor_objects
 		crosshair_objects.append(self)
 
 	def LockToUser(self):
-		x = self.user.pos[0] + sin(self.angle) * 50
-		y = self.user.pos[1] + cos(self.angle) * 50
+		x = self.user.pos[0] + sin(self.angle) * 20
+		y = self.user.pos[1] + cos(self.angle) * 20
 		self.pos = [x,y]
 		self.angle % pi
 		print("crosshair angle is " + str(self.angle))
+
+		self.angle += self.rotation_amount
+		
 
 
 class UserObject(Object):
@@ -233,16 +242,17 @@ class UserObject(Object):
 			user_objects.remove(self)
 
 	def up(self):
-		self.acl = [self.pos[0]-self.crosshairs.pos[0], self.pos[1]-self.crosshairs.pos[1]]
-
+		self.acl = 50
 	def left(self):
-		self.crosshairs.angle+=.5
+		self.crosshairs.rotation_amount =.1
 		self.crosshairs.LockToUser()
 
 	def right(self):
-		self.crosshairs.angle-=.5
+		self.crosshairs.rotation_amount =-.1
 		self.crosshairs.LockToUser()
 
+	def space(self):
+		print("tractor beam!")
 
 
 ########	OLD STEARING SCEME. MAY STILL HAVE USE.		###
@@ -263,9 +273,9 @@ class UserObject(Object):
 	def release_down(self):
 	        self.acl[1] = 0#USER_ACCELERATION_SPEED * timefactor
 	def release_left(self):
-	        self.acl[0] = 0#USER_ACCELERATION_SPEED * timefactor
+	        self.crosshairs.rotation_amount = 0#USER_ACCELERATION_SPEED * timefactor
 	def release_right(self):
-	        self.acl[0] = 0#USER_ACCELERATION_SPEED * timefactor
+	        self.crosshairs.rotation_amount = 0#USER_ACCELERATION_SPEED * timefactor
 
 
 
@@ -378,6 +388,10 @@ class InputHandler():
 				elif event.key == K_RIGHT:
 					user_objects[0].right()#self.user_left_right = 100
 					print("right")
+				elif event.key == K_SPACE:
+					user_objects[0].space()
+					print("space")
+				#elif event.key == K_SPACE:
 				## WARP ##
 				elif event.key == K_w:
 					self.warp("meh")
@@ -518,12 +532,14 @@ class portal():
 Screen = screen.Screen(SIZE_VALUES)
 Clock = Clock()
 InputHandler = InputHandler()
+
+current_plane = 0
+cube_of_existance = []
+
 major_objects = []
 minor_objects = []
 spawners = []
 
-current_plane = 0
-cube_of_existance = []
 portal_objects = []
 user_objects = []
 crosshair_objects = []
