@@ -1,7 +1,7 @@
 import screen
 from pygame.time import Clock
 from pygame.locals import *
-from math import sqrt
+from math import sqrt, atan2, sin, cos, pi, degrees
 from random import randint, uniform
 
 
@@ -21,42 +21,29 @@ G = 4
 WHITE = (255, 255, 255)
 settings = {'paused': False, 'gravity-min': True, 'gravity-maj': True, 'framerate': DEFAULT_FRAMERATE_SETTING}
 timefactor = TIME_RATIO / FRAMERATE_VALUES[settings['framerate']]
-SWARM_MAX_VEL = 10
+SWARM_MAX_VEL = 3
 SWARM_COUNT = 10
 SPAWNER_DELETE_DISTANCE = 25
 TEXT_TIMEOUT = 4
 
+USER_ACCELERATION_SPEED = 1000
 
-class Spawner():
-	def __init__(self, position, obj_velocity, intensity):
-		self.pos = position
-		self.o_vel = obj_velocity
-		self.intensity = intensity
-		self.spawn_counter = 0
 
-	def delete(self):
-		global spawners
-		spawners.remove(self)
 
-	def spawn(self):
-		self.spawn_counter += self.intensity * BASE_SPAWN_RATE
-		global minor_objects
-		while self.spawn_counter > FRAMERATE_VALUES[settings['framerate']]:
-			velocity = list(self.o_vel)
-			velocity[0] += uniform(-SWARM_MAX_VEL, SWARM_MAX_VEL)
-			velocity[1] += uniform(-SWARM_MAX_VEL, SWARM_MAX_VEL)
 
-			object = Object(self.pos, velocity)
-			minor_objects.append(object)
-			self.spawn_counter -= FRAMERATE_VALUES[settings['framerate']]
+
+
 
 class Object():
 	def __init__(self, position, velocity, color=WHITE, mass=0):
 		self.pos = list(position)
 		self.vel = list(velocity)
+		self.acl = [0,0]
+		self.heading = 0
 		self.color = color 
 		self.mass = mass 
 		self.size = 0.5 * pow(abs(mass), 1/3.0)	
+		self.isUser = 0
 		
 	def delete(self):
 		if self.mass:
@@ -83,6 +70,19 @@ class Object():
 			return
 
 		self.gravity = [0, 0]
+
+
+		## handeling of users using portals ##
+		if self.isUser:
+			for object in portal_objects:
+				if object == self:
+					continue
+        
+				distance = sqrt( ((self.pos[0] - object.pos[0])**2) + ((self.pos[1] - object.pos[1])**2))
+				if distance < (self.size + object.size):
+					object.traverse(self)
+					break
+		##  ##
 
 		for object in attractors:
 			if object == self:
@@ -125,11 +125,152 @@ class Object():
 			self.update()	
 
 	def update(self):		
-		self.vel[0] += self.gravity[0] * timefactor
-		self.vel[1] += self.gravity[1] * timefactor
+		self.vel[0] += (self.gravity[0] + self.acl[0]) * timefactor
+		self.vel[1] += (self.gravity[1] + self.acl[1]) * timefactor
+
+	########if self.isUser == 1:
+	########	self.vel[0] += InputHandler.user_left_right * timefactor
+	########	self.vel[1] += InputHandler.user_up_down * timefactor
+	########	print("vel is " + str(InputHandler.user_left_right) +", "+str(InputHandler.user_up_down))
 		
 		self.pos[0] += self.vel[0] * timefactor
 		self.pos[1] += self.vel[1] * timefactor
+
+	def calculate_heading(self):
+		x = self.vel[0]
+		y = self.vel[1]
+		self.heading = 180+degrees(atan2(x,y))
+
+
+
+
+class Spawner(Object):
+	def __init__(self, position, obj_velocity, velocity, intensity, color=WHITE, mass = 0, vel = 0):
+		self.pos = list(position)
+		self.vel = list(velocity)
+		self.acl = [0,0]
+		self.heading = 0
+		self.color = color 
+		self.mass = mass 
+		self.size = 0.5 * pow(abs(mass), 1/3.0)	
+		self.isUser = 0
+		self.mass = mass
+		self.o_vel = obj_velocity
+		self.intensity = intensity
+		self.spawn_counter = 0
+		self.spinv=0
+		
+
+
+	def delete(self):
+		global spawners, minor_objects
+		spawners.remove(self)
+		minor_objects.remove(self)
+
+	def spawn(self):
+		self.spawn_counter += self.intensity * BASE_SPAWN_RATE
+		global minor_objects
+		while self.spawn_counter > FRAMERATE_VALUES[settings['framerate']]:
+			velocity = list(self.o_vel)
+			velocity[0] += uniform(-SWARM_MAX_VEL, SWARM_MAX_VEL)
+			velocity[1] += uniform(-SWARM_MAX_VEL, SWARM_MAX_VEL)
+
+			object = Object(self.pos, velocity)
+			minor_objects.append(object)
+			self.spawn_counter -= FRAMERATE_VALUES[settings['framerate']]
+
+	def spin(self, speed):
+		x = self.o_vel[0]
+		y = self.o_vel[1]
+		#theta = (180+(degrees(atan2(x,y))))
+		print(x, y)
+		self.o_vel[0] = cos(self.spinv)*100
+		self.o_vel[1] = sin(self.spinv)*100 
+		self.spinv+=(.01+90)
+		print(self.o_vel[0],self.o_vel[1])
+
+
+class GravityCrosshairs(Object):
+	def __init__(self, user, colour = WHITE, mass = 0):
+		self.isUser = 0
+		self.pos = [0,0]
+		self.vel = [0,0]
+		self.acl = [0,0]
+		self.color = color 
+		self.mass = mass 
+		self.size = 0.5 * pow(abs(mass), 1/3.0)	
+		self.color = WHITE
+		self.angle = 0
+		self.user = user
+
+		global minor_objects
+		crosshair_objects.append(self)
+
+	def LockToUser(self):
+		x = self.user.pos[0] + sin(self.angle) * 50
+		y = self.user.pos[1] + cos(self.angle) * 50
+		self.pos = [x,y]
+		self.angle % pi
+		print("crosshair angle is " + str(self.angle))
+
+
+class UserObject(Object):
+	def __init__(self, position, velocity, colour = WHITE, mass = 3000):
+		self.isUser = 1	
+		self.pos = list(position)
+		self.vel = list(velocity)
+		self.acl = [0,0]
+		self.color = color 
+		self.mass = mass 
+		self.size = 0.5 * pow(abs(mass), 1/3.0)	
+		self.color = WHITE
+
+		self.crosshairs = GravityCrosshairs(self)
+
+	def delete(self):
+		global user_objects
+		if self in user_objects:
+			user_objects.remove(self)
+
+	def up(self):
+		self.acl = [self.pos[0]-self.crosshairs.pos[0], self.pos[1]-self.crosshairs.pos[1]]
+
+	def left(self):
+		self.crosshairs.angle+=.5
+		self.crosshairs.LockToUser()
+
+	def right(self):
+		self.crosshairs.angle-=.5
+		self.crosshairs.LockToUser()
+
+
+
+########	OLD STEARING SCEME. MAY STILL HAVE USE.		###
+
+########def up(self): 
+########	print("user object says up!")
+########        self.acl[1] = -USER_ACCELERATION_SPEED * timefactor
+########def down(self):
+########        self.acl[1] = USER_ACCELERATION_SPEED * timefactor
+########def left(self):
+########        self.acl[0] = -USER_ACCELERATION_SPEED * timefactor
+########def right(self):
+########        self.acl[0] = USER_ACCELERATION_SPEED * timefactor
+
+	def release_up(self): 
+		print("user object says up!")
+	        self.acl[1] = 0#USER_ACCELERATION_SPEED * timefactor
+	def release_down(self):
+	        self.acl[1] = 0#USER_ACCELERATION_SPEED * timefactor
+	def release_left(self):
+	        self.acl[0] = 0#USER_ACCELERATION_SPEED * timefactor
+	def release_right(self):
+	        self.acl[0] = 0#USER_ACCELERATION_SPEED * timefactor
+
+
+
+
+
 
 class InputHandler():
 	def __init__(self):
@@ -143,6 +284,10 @@ class InputHandler():
 		self.text = ''
 		self.text_timeout = 0
 		self.manual_spawner = None
+
+		self.user_left_right = 0
+		self.user_up_down = 0
+
 
 	def handle_input(self, Screen):
 		def distance(object):
@@ -218,10 +363,43 @@ class InputHandler():
 							found = True
 					if not found:
 						self.repulsor_mode = not self.repulsor_mode
+				## user controlls ##
+				elif event.key == K_u:
+					self.add_object(isUser=1)
+				elif event.key == K_UP:
+					user_objects[0].up()#self.user_up_down = -100
+					print("up")
+				elif event.key == K_DOWN:
+					user_objects[0].down()#self.user_up_down = 100
+					print("down")
+				elif event.key == K_LEFT:
+					user_objects[0].left()#self.user_left_right = -100
+					print("left")
+				elif event.key == K_RIGHT:
+					user_objects[0].right()#self.user_left_right = 100
+					print("right")
+				## WARP ##
+				elif event.key == K_w:
+					self.warp("meh")
+				## ##
 
 			elif event.type == KEYUP:
 				if event.key == K_s:
 					self.manual_spawner = None
+				## kill user keypress ##
+				elif event.key == K_UP:
+					user_objects[0].release_up()#self.user_up_down = -100
+					print("up")
+				elif event.key == K_DOWN:
+					user_objects[0].release_down()#self.user_up_down = 100
+					print("down")
+				elif event.key == K_LEFT:
+					user_objects[0].release_left()#self.user_left_right = -100
+					print("left")
+				elif event.key == K_RIGHT:
+					user_objects[0].release_right()#self.user_left_right = 100
+					print("right")
+				## ##
 			elif event.type == VIDEORESIZE:
 				global screen_size
 				screen_size = event.size
@@ -247,7 +425,7 @@ class InputHandler():
 		self.display_data = {'holding': self.mouse_holding and not self.manual_spawner, 'init_pos': self.mouse_initial_pos, 'pos': self.mouse_pos, 'size': SIZE_VALUES[self.mass_selection], 'color': self.next_color, 'repulsor_mode': self.repulsor_mode, 'text': self.text}
 		
 
-	def add_object(self):
+	def add_object(self, isUser=0):
 		velocity = (self.mouse_pos[0] - self.mouse_initial_pos[0], self.mouse_pos[1] - self.mouse_initial_pos[1])
 
 		if self.mass_selection == 0:
@@ -260,14 +438,22 @@ class InputHandler():
 		else:
 			mass = MASS_VALUES[self.mass_selection]
 
-		new_object = Object(self.mouse_initial_pos, velocity, color, mass)
 
-		if self.mass_selection == 0:
-			global minor_objects
-			minor_objects.append(new_object)
+		if isUser == 1:
+			new_object = UserObject(self.mouse_initial_pos, velocity, color, mass)
+			new_object.isUser=isUser
+			global user_objects
+			user_objects.append(new_object)
+			print("add user says its a user")
 		else:
-			global major_objects
-			major_objects.append(new_object)
+			new_object = Object(self.mouse_initial_pos, velocity, color, mass)
+
+			if self.mass_selection == 0:
+				global minor_objects
+				minor_objects.append(new_object)
+			else:
+				global major_objects
+				major_objects.append(new_object)
 
 		new_object.tick(major_objects)
 
@@ -277,6 +463,58 @@ class InputHandler():
 		intensity = SWARM_COUNT if Screen.get_mods() & KMOD_SHIFT else 1	
 		spawners.append(Spawner(self.manual_spawner.pos, velocity, intensity))
 
+	def warp(self, destination, traveler):
+		global major_objects, minor_objects, portal_objects, current_plane, user_objects, spawners
+		new_traveler = traveler
+		traveler.delete()
+		cube_of_existance[current_plane].major_objects = major_objects
+		cube_of_existance[current_plane].minor_objects = minor_objects
+		cube_of_existance[current_plane].portal_objects = portal_objects
+		cube_of_existance[current_plane].user_objects = user_objects
+		cube_of_existance[current_plane].spawners = spawners
+		for object in spawners:
+			spawners.remove(object)
+
+		target_plane = cube_of_existance[destination]
+		new_traveler.vel = [-traveler.vel[0],-traveler.vel[1]]
+		major_objects = target_plane.major_objects
+		user_objects.append(new_traveler)
+
+		minor_objects = target_plane.minor_objects
+		portal_objects = target_plane.portal_objects
+		spawners = target_plane.spawners
+		current_plane = destination
+		#print(current_plane)
+
+
+
+
+class plane_of_existance():
+	def __init__(self, major_objects, minor_objects, portal_objects, spawners = []):
+		self.major_objects=major_objects
+		self.minor_objects=minor_objects
+		self.portal_objects=portal_objects
+		self.spawners = spawners
+
+
+
+class portal():
+	def __init__(self, position, destination):
+		self.mass = 1
+		self.isUser = 0
+		self.pos = position
+		self.color = WHITE
+		self.size = 50
+		self.destination = destination
+
+	def traverse(self, traveler):
+		InputHandler.warp(self.destination, traveler)
+
+
+
+
+
+
 Screen = screen.Screen(SIZE_VALUES)
 Clock = Clock()
 InputHandler = InputHandler()
@@ -284,16 +522,64 @@ major_objects = []
 minor_objects = []
 spawners = []
 
+current_plane = 0
+cube_of_existance = []
+portal_objects = []
+user_objects = []
+crosshair_objects = []
+
+
+while True:
+
+	new_plane1 = plane_of_existance([],[],[])
+	new_plane2 = plane_of_existance([],[],[portal([50,50],2)])
+	new_plane3 = plane_of_existance([],[],[portal([250,50],0)])
+
+	new_portal1 = portal([50,50],1)
+	portal_objects.append(new_portal1)
+
+	cube_of_existance.append(new_plane1)
+	cube_of_existance.append(new_plane2)
+	cube_of_existance.append(new_plane3)
+	
+	new_player = UserObject([300,300],[0,0])
+	user_objects.append(new_player)
+
+	new_spawner = Spawner([400,300],[0,0],[0,0],.3)
+	minor_objects.append(new_spawner)
+
+
+	break
+
+
+
+
 while True:
 	if not settings['paused']:
+		for object in crosshair_objects:
+			object.LockToUser()
+			
+		for object in user_objects:
+			object.tick(major_objects+user_objects)
+			object.calculate_heading()
 		for object in major_objects:
-			object.tick(major_objects)
+			object.tick(major_objects+user_objects)
+			object.calculate_heading()
+		for object in user_objects:
+			object.update()
 		for object in major_objects:
 			object.update()
 		for object in minor_objects:
-			object.tick(major_objects)
+			try:
+				object.o_vel
+				new_spawner.spin(1)
+				new_spawner.spawn()
+			except AttributeError:
+				"its not a spawner!"
+			object.tick(major_objects+user_objects)
+			object.calculate_heading()
 		for spawner in spawners:
 			spawner.spawn()
-	InputHandler.handle_input(Screen)	
-	Screen.frame(major_objects+minor_objects, InputHandler.display_data)
+	InputHandler.handle_input(Screen)
+	Screen.frame(major_objects+minor_objects+portal_objects+user_objects+crosshair_objects, InputHandler.display_data)
 	Clock.tick(FRAMERATE_VALUES[settings['framerate']])	
