@@ -21,6 +21,7 @@ folders=(os.listdir(PROJECT_PATH+"/images/gifs/"))
 ##Loads all the images in images/gifs
 sprites= {};
 offset={};
+frames={};
 for i in folders:
   files =  os.listdir(PROJECT_PATH+"/images/gifs/"+i+"/")
   sprites[i]=[]
@@ -52,12 +53,11 @@ class Screen():
                         pos=[0,0]
                         pos[0]=object.pos[0]-(center[0])+(self.screen_size[1]/2)
                         pos[1]=object.pos[1]-(center[1])+(self.screen_size[1]/2)
-
                         if object.kind == "generic":
                             pygame.draw.circle(self.window, object.color, map(lambda x: int(x), pos), int(object.size))
                         if object.kind == "user":
-                            pos[0]-16
-                            pos[1]-16
+                            pos[0]-(offset["WIKISHIP1GIF"][0]/2)
+                            pos[1]-(offset["WIKISHIP1GIF"][1]/2)
                             self.window.blit(sprites["WIKISHIP1GIF"][4], pos)
                         else:
                             pygame.draw.circle(self.window, object.color, map(lambda x: int(x), pos), int(object.size))
