@@ -58,8 +58,9 @@ class Screen():
                         if object.kind == "generic":
                             pygame.draw.circle(self.window, object.color, map(lambda x: int(x), pos), int(object.size))
                         if object.kind == "user":
-                            pos[0]-(offset["WIKISHIP1GIF"][0]/2)
-                            pos[1]-(offset["WIKISHIP1GIF"][1]/2)
+                            pygame.draw.circle(self.window, object.color, map(lambda x: int(x), pos), int(object.size))
+                            pos[0]-=(offset["WIKISHIP1GIF"][0]/2)
+                            pos[1]-=(offset["WIKISHIP1GIF"][1]/2)
                             self.window.blit(sprites["WIKISHIP1GIF"][4], pos)
                         else:
                             pygame.draw.circle(self.window, object.color, map(lambda x: int(x), pos), int(object.size))
